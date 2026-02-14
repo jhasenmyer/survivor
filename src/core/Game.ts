@@ -84,8 +84,15 @@ export class Game {
 
     const delta = this.clock.getDelta();
 
-    // Update game systems
-    this.player.update(delta);
+    // Update game systems with terrain collision
+    this.player.update(delta, (x, z) => this.world.getTerrainHeight(x, z));
+
+    // Update world chunks based on player position
+    this.world.updatePlayerPosition(
+      this.player.camera.position.x,
+      this.player.camera.position.z
+    );
+
     this.world.update(delta);
 
     // Render

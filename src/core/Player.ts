@@ -62,7 +62,7 @@ export class Player {
     });
   }
 
-  public update(delta: number): void {
+  public update(delta: number, getTerrainHeight?: (x: number, z: number) => number): void {
     if (!this.isLocked) return;
 
     // Get input direction
@@ -91,21 +91,39 @@ export class Player {
     this.velocity.x = moveDirection.x * this.MOVE_SPEED;
     this.velocity.z = moveDirection.z * this.MOVE_SPEED;
 
-    // Apply gravity (simple ground collision at y=1.6)
+    // Apply gravity
     this.velocity.y -= this.GRAVITY * delta;
 
     // Update position
     this.camera.position.addScaledVector(this.velocity, delta);
 
-    // Simple ground collision
-    if (this.camera.position.y < 1.6) {
-      this.camera.position.y = 1.6;
+    // Terrain collision with proper height detection
+    const EYE_HEIGHT = 1.6;
+    const GROUND_BUFFER = 0.1; // Small buffer to prevent clipping
+    let groundHeight = 0; // Default ground height
+
+    if (getTerrainHeight) {
+      groundHeight = getTerrainHeight(this.camera.position.x, this.camera.position.z);
+    }
+
+    const targetHeight = groundHeight + EYE_HEIGHT + GROUND_BUFFER;
+
+    // Check if player is on or below ground
+    if (this.camera.position.y <= targetHeight) {
+      this.camera.position.y = targetHeight;
       this.velocity.y = 0;
 
       // Jump
       if (this.inputManager.isKeyPressed('Space')) {
         this.velocity.y = this.JUMP_FORCE;
       }
+    }
+
+    // Also clamp if player goes below terrain (safety check)
+    const minHeight = groundHeight + EYE_HEIGHT;
+    if (this.camera.position.y < minHeight) {
+      this.camera.position.y = minHeight;
+      this.velocity.y = Math.max(0, this.velocity.y);
     }
 
     // Update HUD
