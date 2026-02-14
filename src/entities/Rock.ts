@@ -13,6 +13,7 @@ export class Rock extends Entity {
   private mineCount: number = 0;
   private requiredMines: number = 3; // Takes 3 hits to break
   private rockType: 'stone' | 'flint';
+  private world: World | null = null;
 
   constructor(position: THREE.Vector3, rockType: 'stone' | 'flint' = 'stone') {
     super({
@@ -57,7 +58,9 @@ export class Rock extends Entity {
   /**
    * Update rock
    */
-  public update(_delta: number, _world: World): void {
+  public update(_delta: number, world: World): void {
+    // Store world reference for spawning loot
+    this.world = world;
     this.updateBoundingBox();
   }
 
@@ -68,7 +71,9 @@ export class Rock extends Entity {
     // Check if player has a tool equipped
     const equippedItem = player.inventory.getEquippedItem();
 
-    if (!equippedItem || (equippedItem.id !== 'dull_axe' && equippedItem.id !== 'knife')) {
+    // Valid mining tools
+    const validTools = ['dull_axe', 'knife', 'stone_axe', 'stone_pickaxe', 'iron_axe', 'iron_pickaxe', 'flint_knife'];
+    if (!equippedItem || !validTools.includes(equippedItem.id)) {
       console.log('You need a tool to mine rocks!');
       return;
     }
@@ -77,9 +82,12 @@ export class Rock extends Entity {
     this.mineCount++;
     console.log(`Mined rock ${this.mineCount}/${this.requiredMines} times`);
 
-    // Damage the tool (rocks wear tools faster)
+    // Damage the tool - pickaxes take less durability damage
+    const isPickaxe = equippedItem.id.includes('pickaxe');
+    const durabilityLoss = isPickaxe ? 1 : 2; // Pickaxes only lose 1 durability, other tools lose 2
+
     const selectedSlot = player.inventory.getSelectedSlot();
-    const toolBroke = player.inventory.damageTool(selectedSlot, 2);
+    const toolBroke = player.inventory.damageTool(selectedSlot, durabilityLoss);
     if (toolBroke && player.notificationCallback) {
       player.notificationCallback(`Your ${equippedItem.name} broke!`, 'error');
     }
@@ -104,10 +112,6 @@ export class Rock extends Entity {
    * Get interaction prompt
    */
   public getInteractionPrompt(): string {
-    const equippedItem = (this as any).player?.inventory.getEquippedItem();
-    if (!equippedItem) {
-      return 'Need a tool to mine rock';
-    }
     const resourceName = this.rockType === 'flint' ? 'Flint' : 'Stone';
     return `Press E to mine ${resourceName} (${this.mineCount}/${this.requiredMines})`;
   }
@@ -118,31 +122,24 @@ export class Rock extends Entity {
   protected die(): void {
     console.log(`Rock broke! Dropping ${this.rockType}...`);
 
-    if (!this.mesh || !this.mesh.parent) return;
-
     // Drop resources based on rock type
-    const dropPosition = this.position.clone();
-    dropPosition.y += 0.5;
+    if (this.world && this.world.entityManager) {
+      const dropPosition = this.position.clone();
+      dropPosition.y += 0.5;
 
-    if (this.rockType === 'flint') {
-      // Drop 1-2 flint
-      const quantity = 1 + Math.floor(Math.random() * 2);
-      const flintDrop = new ItemEntity(ITEMS['flint'], dropPosition, quantity);
-      if (this.mesh.parent) {
-        (this.mesh.parent as any).entityManager?.addEntity(flintDrop);
+      if (this.rockType === 'flint') {
+        // Drop 1-2 flint
+        const quantity = 1 + Math.floor(Math.random() * 2);
+        const flintDrop = new ItemEntity(ITEMS['flint'], dropPosition, quantity);
+        this.world.entityManager.addEntity(flintDrop);
+        console.log(`Dropped ${quantity} flint at position`, dropPosition);
+      } else {
+        // Drop 2-4 stone
+        const quantity = 2 + Math.floor(Math.random() * 3);
+        const stoneDrop = new ItemEntity(ITEMS['stone'], dropPosition, quantity);
+        this.world.entityManager.addEntity(stoneDrop);
+        console.log(`Dropped ${quantity} stone at position`, dropPosition);
       }
-    } else {
-      // Drop 2-4 stone
-      const quantity = 2 + Math.floor(Math.random() * 3);
-      const stoneDrop = new ItemEntity(ITEMS['stone'], dropPosition, quantity);
-      if (this.mesh.parent) {
-        (this.mesh.parent as any).entityManager?.addEntity(stoneDrop);
-      }
-    }
-
-    // Remove rock from scene
-    if (this.mesh.parent) {
-      this.mesh.parent.remove(this.mesh);
     }
   }
 }

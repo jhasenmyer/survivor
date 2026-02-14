@@ -8,6 +8,7 @@ import { TimeSystem } from '../systems/TimeSystem';
 import { InteractionSystem } from '../systems/InteractionSystem';
 import { SaveSystem } from '../systems/SaveSystem';
 import { BuildingSystem } from '../systems/BuildingSystem';
+import { CraftingSystem } from '../systems/CraftingSystem';
 import { ITEMS } from '../types/Item';
 
 export class Game {
@@ -26,10 +27,12 @@ export class Game {
   private interactionSystem: InteractionSystem;
   private saveSystem: SaveSystem;
   private buildingSystem: BuildingSystem;
+  private craftingSystem: CraftingSystem;
 
   // UI state
   private inventoryOpen: boolean = false;
   private helpOpen: boolean = false;
+  private craftingOpen: boolean = false;
   private hasLoggedFirstFrame: boolean = false;
 
   // Lights (needed for TimeSystem)
@@ -113,6 +116,11 @@ export class Game {
     console.log('Creating BuildingSystem');
     this.buildingSystem = new BuildingSystem(this.player, this.world, this.scene);
     console.log('BuildingSystem created');
+
+    // Initialize crafting system
+    console.log('Creating CraftingSystem');
+    this.craftingSystem = new CraftingSystem(this.player);
+    console.log('CraftingSystem created');
 
     // Setup UI handlers
     this.setupUIHandlers();
@@ -295,6 +303,21 @@ export class Game {
     // Unlock pointer when help is open
     if (this.helpOpen) {
       document.exitPointerLock();
+    }
+  }
+
+  /**
+   * Toggle crafting UI
+   */
+  private toggleCrafting(): void {
+    this.craftingOpen = !this.craftingOpen;
+
+    if (this.craftingOpen) {
+      this.craftingSystem.openMenu();
+    } else {
+      this.craftingSystem.closeMenu();
+      // Update hotbar when closing crafting menu (in case items were crafted)
+      this.updateHotbarUI();
     }
   }
 
@@ -614,6 +637,17 @@ export class Game {
 
     // Skip other inputs if inventory is open
     if (this.inventoryOpen) {
+      return;
+    }
+
+    // Crafting menu toggle (C key) - always check so it can close too
+    if (this.inputManager.isCraftingToggled()) {
+      this.toggleCrafting();
+      return; // Don't process other inputs when toggling
+    }
+
+    // Skip other inputs if crafting is open
+    if (this.craftingOpen) {
       return;
     }
 

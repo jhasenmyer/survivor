@@ -55,6 +55,70 @@ export const ITEMS: Record<string, ItemDefinition> = {
     damage: 10,
   },
 
+  stone_axe: {
+    id: 'stone_axe',
+    name: 'Stone Axe',
+    icon: '🪓',
+    type: ItemType.TOOL,
+    maxStack: 1,
+    description: 'A sturdy stone axe. Better than the old dull axe.',
+    durability: 100,
+    damage: 15,
+  },
+
+  stone_pickaxe: {
+    id: 'stone_pickaxe',
+    name: 'Stone Pickaxe',
+    icon: '⛏️',
+    type: ItemType.TOOL,
+    maxStack: 1,
+    description: 'A stone pickaxe for mining. Takes less durability damage.',
+    durability: 100,
+    damage: 12,
+  },
+
+  flint_knife: {
+    id: 'flint_knife',
+    name: 'Flint Knife',
+    icon: '🔪',
+    type: ItemType.TOOL,
+    maxStack: 1,
+    description: 'A sharp flint knife. Better for hunting.',
+    durability: 120,
+    damage: 20,
+  },
+
+  iron_axe: {
+    id: 'iron_axe',
+    name: 'Iron Axe',
+    icon: '🪓',
+    type: ItemType.TOOL,
+    maxStack: 1,
+    description: 'A high-quality iron axe. Very durable.',
+    durability: 200,
+    damage: 25,
+  },
+
+  iron_pickaxe: {
+    id: 'iron_pickaxe',
+    name: 'Iron Pickaxe',
+    icon: '⛏️',
+    type: ItemType.TOOL,
+    maxStack: 1,
+    description: 'An iron pickaxe. Excellent for mining.',
+    durability: 200,
+    damage: 20,
+  },
+
+  torch: {
+    id: 'torch',
+    name: 'Torch',
+    icon: '🔦',
+    type: ItemType.EQUIPMENT,
+    maxStack: 10,
+    description: 'A simple torch for light.',
+  },
+
   // Resources
   wood: {
     id: 'wood',

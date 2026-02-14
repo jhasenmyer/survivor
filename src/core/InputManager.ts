@@ -105,6 +105,13 @@ export class InputManager {
   }
 
   /**
+   * Check crafting menu toggle (C)
+   */
+  public isCraftingToggled(): boolean {
+    return this.isKeyJustPressed('KeyC');
+  }
+
+  /**
    * Check hotbar slot selection (1-9)
    */
   public getHotbarSlotPressed(): number | null {

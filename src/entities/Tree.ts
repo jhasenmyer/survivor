@@ -47,7 +47,8 @@ export class Tree extends Entity {
     // Check if player has an axe equipped
     const equippedItem = player.inventory.getEquippedItem();
 
-    if (!equippedItem || equippedItem.id !== 'dull_axe') {
+    const validAxes = ['dull_axe', 'stone_axe', 'iron_axe'];
+    if (!equippedItem || !validAxes.includes(equippedItem.id)) {
       console.log('You need an axe to chop trees!');
       return;
     }

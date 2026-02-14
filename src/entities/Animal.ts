@@ -161,7 +161,9 @@ export abstract class Animal extends Entity {
     // Check if player has the right tool equipped
     const equippedItem = player.inventory.getEquippedItem();
 
-    if (!equippedItem || equippedItem.type !== 'tool') {
+    // Valid hunting weapons
+    const validWeapons = ['knife', 'flint_knife', 'dull_axe', 'stone_axe', 'iron_axe'];
+    if (!equippedItem || !validWeapons.includes(equippedItem.id)) {
       console.log('You need a weapon to hunt!');
       return;
     }
