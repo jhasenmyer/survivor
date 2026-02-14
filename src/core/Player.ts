@@ -91,39 +91,64 @@ export class Player {
     this.velocity.x = moveDirection.x * this.MOVE_SPEED;
     this.velocity.z = moveDirection.z * this.MOVE_SPEED;
 
-    // Apply gravity
-    this.velocity.y -= this.GRAVITY * delta;
-
-    // Update position
-    this.camera.position.addScaledVector(this.velocity, delta);
-
-    // Terrain collision with proper height detection
+    // Terrain collision - check BEFORE moving
     const EYE_HEIGHT = 1.6;
-    const GROUND_BUFFER = 0.1; // Small buffer to prevent clipping
-    let groundHeight = 0; // Default ground height
+    let groundHeight = 0;
+    let isOnGround = false;
 
     if (getTerrainHeight) {
       groundHeight = getTerrainHeight(this.camera.position.x, this.camera.position.z);
+      const minHeight = groundHeight + EYE_HEIGHT;
+
+      // Check if we're on or very close to the ground
+      if (this.camera.position.y <= minHeight + 0.2) {
+        isOnGround = true;
+      }
     }
 
-    const targetHeight = groundHeight + EYE_HEIGHT + GROUND_BUFFER;
-
-    // Check if player is on or below ground
-    if (this.camera.position.y <= targetHeight) {
-      this.camera.position.y = targetHeight;
-      this.velocity.y = 0;
+    // Apply gravity only if not on ground
+    if (!isOnGround) {
+      this.velocity.y -= this.GRAVITY * delta;
+    } else {
+      // On ground - stop falling
+      this.velocity.y = Math.max(0, this.velocity.y);
 
       // Jump
       if (this.inputManager.isKeyPressed('Space')) {
         this.velocity.y = this.JUMP_FORCE;
+        isOnGround = false;
       }
     }
 
-    // Also clamp if player goes below terrain (safety check)
-    const minHeight = groundHeight + EYE_HEIGHT;
-    if (this.camera.position.y < minHeight) {
-      this.camera.position.y = minHeight;
-      this.velocity.y = Math.max(0, this.velocity.y);
+    // Update position
+    this.camera.position.addScaledVector(this.velocity, delta);
+
+    // Post-movement terrain collision - ALWAYS enforce minimum height
+    if (getTerrainHeight) {
+      // Sample terrain at multiple points around player for better collision
+      const sampleRadius = 0.5;
+      const samples = [
+        { x: this.camera.position.x, z: this.camera.position.z }, // Center
+        { x: this.camera.position.x + sampleRadius, z: this.camera.position.z }, // Front
+        { x: this.camera.position.x - sampleRadius, z: this.camera.position.z }, // Back
+        { x: this.camera.position.x, z: this.camera.position.z + sampleRadius }, // Right
+        { x: this.camera.position.x, z: this.camera.position.z - sampleRadius }, // Left
+      ];
+
+      // Find the maximum ground height from all samples
+      let maxGroundHeight = 0;
+      for (const sample of samples) {
+        const height = getTerrainHeight(sample.x, sample.z);
+        maxGroundHeight = Math.max(maxGroundHeight, height);
+      }
+
+      const minAllowedHeight = maxGroundHeight + EYE_HEIGHT;
+
+      // Force player to stay above ground - this is a hard constraint
+      if (this.camera.position.y < minAllowedHeight) {
+        this.camera.position.y = minAllowedHeight;
+        this.velocity.y = Math.max(0, this.velocity.y); // Stop downward velocity
+      }
     }
 
     // Update HUD
