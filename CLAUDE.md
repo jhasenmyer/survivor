@@ -271,21 +271,73 @@ src/
 
 ## Adding New Features
 
+### Adding Items
+1. Add item definition to `ITEMS` registry in `src/types/Item.ts`
+2. Specify: id, name, icon (emoji), type, maxStack, description
+3. For tools: add durability and damage properties
+4. For consumables: add useAction function that modifies player stats
+5. Item automatically available in inventory system
+
+### Adding Crafting Recipes
+1. Add recipe to `RECIPES` registry in `src/types/CraftingRecipe.ts`
+2. Specify: id, name, description, resultItemId, resultQuantity
+3. Define requirements array with itemId and quantity
+4. Assign category: 'tools', 'consumables', or 'equipment'
+5. Recipe automatically appears in crafting UI
+
+### Adding Building Recipes
+1. Add recipe to `RECIPES` registry in `src/types/BuildingRecipe.ts`
+2. Specify structure dimensions, visual appearance, requirements
+3. Add structure creation logic in `BuildingSystem.ts`
+4. Structure type should be defined in `src/entities/Structure.ts`
+
 ### Adding Entities
-1. Create entity class in `src/entities/`
-2. Entities should have `update(delta: number)` method
-3. Register with World or create an EntityManager system
+1. Create entity class extending `Entity` base class in `src/entities/`
+2. Implement required methods:
+   - `update(delta: number)`: Update logic each frame
+   - `dispose()`: Cleanup when entity is removed
+3. Add Three.js mesh to entity's mesh property
+4. Spawn entities via `World` class or `EntityManager`
+5. For interactive entities: add interaction logic in `InteractionSystem.ts`
 
 ### Adding Game Systems
-1. Create system in `src/systems/`
-2. Systems manage related entities/behaviors
-3. Initialize in Game.ts and call update in game loop
+1. Create system class in `src/systems/`
+2. Systems should manage related entities/behaviors
+3. Initialize system in `Game.ts` constructor
+4. Call system's `update(delta)` method in game loop if needed
+5. Systems can access scene, player, and world via constructor
+
+### Notification System
+
+The game includes a notification system for important events:
+- Tool breaks: "Your [tool name] broke!"
+- Inventory full: "Inventory is full!"
+- Resource gathered: "Gathered [item] x[quantity]"
+- Crafting: "Crafted [item]!"
+- Building: "Placed [structure]!"
+
+**Usage**:
+```typescript
+// In Entity class - notify via callback
+if (this.onNotify) {
+  this.onNotify('Your tool broke!');
+}
+
+// In Player class - set callback when spawning entities
+entity.onNotify = (message) => this.showNotification(message);
+```
+
+Notifications appear in top-right corner with smooth fade-in/fade-out animations (3-second duration).
 
 ### Performance Considerations
 - Use object pooling for frequently created/destroyed objects
 - Frustum culling is automatic with Three.js
+- Entity Manager handles entity cleanup and disposal
+- Limit active entities per chunk to maintain frame rate
 - Consider LOD (Level of Detail) for distant objects
 - Keep draw calls low by batching similar geometries
+- Use `requestAnimationFrame` for smooth 60 FPS rendering
+- Delta time ensures consistent behavior across frame rates
 
 ## Game Features (Implemented)
 
@@ -368,3 +420,60 @@ src/
 - Achievements/progression system
 - Settings menu (graphics, audio, controls)
 - Mobile/touch controls
+
+## Development Tips
+
+### Debugging
+- Open browser console (F12) for logs and errors
+- Player stats and inventory state logged on important events
+- Entity interactions logged with console messages
+- Use Chrome DevTools Performance tab for FPS analysis
+
+### Testing
+- Run tests: `npm run test`
+- Test UI: `npm run test:ui`
+- Lint before committing: `npm run lint:fix`
+
+### Common Patterns
+
+**Adding a new interactive entity:**
+1. Create entity class in `src/entities/` (extend `Entity`)
+2. Add spawn logic in `World.ts`
+3. Add interaction case in `InteractionSystem.ts`
+4. Test interaction with E key
+
+**Adding a new consumable item:**
+1. Add to `ITEMS` registry with `useAction` function
+2. `useAction` receives `player` parameter
+3. Call `player.consume(hunger, thirst)` or `player.heal(amount)`
+4. Call `player.removeItemById(itemId, quantity)` to consume item
+
+**Modifying player stats:**
+- Health: `player.heal(amount)` or `player.takeDamage(amount)`
+- Hunger/Thirst: `player.consume(hunger, thirst)`
+- Access directly: `player.health`, `player.hunger`, `player.thirst`
+
+**Working with inventory:**
+- Add items: `player.addItem(itemDefinition, quantity)`
+- Remove items: `player.removeItemById(itemId, quantity)`
+- Check items: `player.hasItem(itemId, quantity)`
+- Get equipped: `player.getEquippedItem()`
+
+### Git Workflow
+- Main branch: `main`
+- Create feature branches for new features
+- Commit messages should describe what changed and why
+- Test locally before pushing to production
+
+## Project Status
+
+This project has evolved from a basic Three.js demo into a feature-rich survival game with:
+- ✅ Complete inventory and crafting systems
+- ✅ Resource gathering mechanics
+- ✅ Tool durability and progression
+- ✅ Building/construction system
+- ✅ Day/night cycle
+- ✅ Save/load functionality
+- ✅ Multiple entity types and interactions
+
+The game is in active development with regular updates adding new features and polish.
