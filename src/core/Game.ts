@@ -525,6 +525,11 @@ export class Game {
           this.updateHotbarUI(); // Update UI after placing (resources used)
         }
       }
+
+      // Recipe cycle (R key)
+      if (this.inputManager.isRecycleCyclePressed()) {
+        this.buildingSystem.cycleRecipe();
+      }
     } else {
       // Normal mode inputs
       // Interaction (E key)

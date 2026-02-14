@@ -156,6 +156,41 @@
       font-size: 16px;
       text-align: center;
     }
+    /* Build Mode UI */
+    #build-mode-ui {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 6px;
+      border: 2px solid #4a9eff;
+      min-width: 250px;
+    }
+    #build-mode-ui h3 {
+      margin: 0 0 10px 0;
+      font-size: 18px;
+      color: #4a9eff;
+    }
+    #build-mode-ui .build-info {
+      margin: 5px 0;
+      font-size: 14px;
+    }
+    #build-mode-ui .build-requirements {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.3);
+      font-size: 12px;
+      color: #aaa;
+    }
+    #build-mode-ui .build-controls {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.3);
+      font-size: 11px;
+      color: #888;
+    }
     /* Death Screen */
     #death-screen {
       position: absolute;
@@ -313,6 +348,22 @@
     <!-- Interaction Prompt -->
     <div id="interaction-prompt" style="display: none;">
       Press E to interact
+    </div>
+
+    <!-- Build Mode UI -->
+    <div id="build-mode-ui" style="display: none;">
+      <h3 id="build-mode-title">Build Mode</h3>
+      <div class="build-info">
+        <strong id="build-structure-name">Campfire</strong>
+      </div>
+      <div class="build-info" id="build-description">Cook food and stay warm</div>
+      <div class="build-requirements">
+        <strong>Requirements:</strong>
+        <div id="build-requirements-list"></div>
+      </div>
+      <div class="build-controls">
+        R - Cycle Structure | E - Place | B - Exit
+      </div>
     </div>
   </div>
 

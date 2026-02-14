@@ -31,11 +31,13 @@ export class BuildingSystem {
     this.isInBuildMode = !this.isInBuildMode;
 
     if (this.isInBuildMode) {
-      console.log('Entered build mode - Press B to exit, E to place');
+      console.log(`Entered build mode - Building: ${RECIPES[this.currentRecipeId].name} - Press R to cycle, E to place, B to exit`);
       this.createGhostMesh();
+      this.showBuildUI();
     } else {
       console.log('Exited build mode');
       this.removeGhostMesh();
+      this.hideBuildUI();
     }
   }
 
@@ -193,6 +195,9 @@ export class BuildingSystem {
       this.removeGhostMesh();
       this.createGhostMesh();
     }
+
+    // Update UI
+    this.updateBuildUI();
   }
 
   /**
@@ -200,5 +205,58 @@ export class BuildingSystem {
    */
   public getCurrentRecipe(): BuildingRecipe | null {
     return RECIPES[this.currentRecipeId] || null;
+  }
+
+  /**
+   * Show build mode UI
+   */
+  private showBuildUI(): void {
+    const buildUI = document.getElementById('build-mode-ui');
+    if (buildUI) {
+      buildUI.style.display = 'block';
+      this.updateBuildUI();
+    }
+  }
+
+  /**
+   * Hide build mode UI
+   */
+  private hideBuildUI(): void {
+    const buildUI = document.getElementById('build-mode-ui');
+    if (buildUI) {
+      buildUI.style.display = 'none';
+    }
+  }
+
+  /**
+   * Update build mode UI with current recipe info
+   */
+  private updateBuildUI(): void {
+    const recipe = RECIPES[this.currentRecipeId];
+    if (!recipe) return;
+
+    // Update structure name
+    const nameElement = document.getElementById('build-structure-name');
+    if (nameElement) {
+      nameElement.textContent = recipe.name;
+    }
+
+    // Update description
+    const descElement = document.getElementById('build-description');
+    if (descElement) {
+      descElement.textContent = recipe.description;
+    }
+
+    // Update requirements
+    const reqListElement = document.getElementById('build-requirements-list');
+    if (reqListElement) {
+      reqListElement.innerHTML = recipe.requirements
+        .map((req) => {
+          const hasEnough = this.player.hasItem(req.itemId, req.quantity);
+          const color = hasEnough ? '#4a9eff' : '#ff4444';
+          return `<div style="color: ${color};">${req.quantity}x ${req.itemId}</div>`;
+        })
+        .join('');
+    }
   }
 }

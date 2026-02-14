@@ -91,6 +91,13 @@ export class InputManager {
   }
 
   /**
+   * Check recipe cycle (R)
+   */
+  public isRecycleCyclePressed(): boolean {
+    return this.isKeyJustPressed('KeyR');
+  }
+
+  /**
    * Check hotbar slot selection (1-5)
    */
   public getHotbarSlotPressed(): number | null {
