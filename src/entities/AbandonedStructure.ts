@@ -110,6 +110,30 @@ export class AbandonedStructure extends Entity {
   }
 
   /**
+   * Handle interaction with player
+   * Structures are not directly interactable - loot spawns as separate ItemEntity
+   */
+  public onInteract(_player: any): void {
+    // No-op: Structures are passive collision objects
+  }
+
+  /**
+   * Get interaction prompt
+   * Structures are not directly interactable
+   */
+  public getInteractionPrompt(): string {
+    return ''; // No interaction prompt
+  }
+
+  /**
+   * Handle structure death/destruction
+   * Structures cannot be destroyed
+   */
+  protected die(): void {
+    // No-op: Structures are indestructible
+  }
+
+  /**
    * Spawn loot inside the structure
    */
   public spawnLoot(world: World, random: () => number): void {
