@@ -23,7 +23,6 @@ export class World {
   private readonly CHUNK_SIZE = 50;
   private readonly VIEW_DISTANCE = 3; // Load chunks within 3 chunks of player
   private readonly TREE_DENSITY = 20; // Trees per chunk
-  private readonly WATER_SOURCE_DENSITY = 1.5; // Average water sources per chunk (1-2)
   private readonly CHUNK_OVERLAP = 0.1; // Small overlap to prevent gaps
 
   private lastPlayerChunkX: number = 0;

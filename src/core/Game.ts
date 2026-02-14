@@ -142,14 +142,15 @@ export class Game {
    * Give player starting items
    */
   private giveStartingItems(): void {
-    // Add knife and axe to inventory
+    // Add knife, axe, and empty water bottle to inventory
     this.player.inventory.addItem(ITEMS['knife'], 1);
     this.player.inventory.addItem(ITEMS['dull_axe'], 1);
+    this.player.inventory.addItem(ITEMS['water_bottle_empty'], 1);
 
     // Select knife as equipped item (slot 0)
     this.player.inventory.selectHotbarSlot(0);
 
-    console.log('Starting items added: Knife and Axe');
+    console.log('Starting items added: Knife, Axe, and Water Bottle');
 
     // Update hotbar UI
     this.updateHotbarUI();
@@ -203,15 +204,18 @@ export class Game {
         `.hotbar-slot[data-slot="${index}"]`
       );
       if (slotElement) {
+        const iconElement = slotElement.querySelector('.hotbar-slot-icon');
+        const quantityElement = slotElement.querySelector('.hotbar-slot-quantity');
         const nameElement = slotElement.querySelector('.hotbar-slot-name');
-        if (nameElement) {
-          if (slot.item) {
-            nameElement.textContent = `${slot.item.name}${
-              slot.quantity > 1 ? ` (${slot.quantity})` : ''
-            }`;
-          } else {
-            nameElement.textContent = 'Empty';
-          }
+
+        if (slot.item) {
+          if (iconElement) iconElement.textContent = slot.item.icon;
+          if (quantityElement) quantityElement.textContent = slot.quantity > 1 ? `${slot.quantity}` : '';
+          if (nameElement) nameElement.textContent = slot.item.name;
+        } else {
+          if (iconElement) iconElement.textContent = '';
+          if (quantityElement) quantityElement.textContent = '';
+          if (nameElement) nameElement.textContent = 'Empty';
         }
 
         // Update active state
@@ -276,14 +280,30 @@ export class Game {
       slotElement.className = 'inventory-slot';
 
       // Mark hotbar slots
-      if (index < 5) {
+      if (index < 9) {
         slotElement.classList.add('hotbar-slot-inv');
       }
 
       if (slot.item) {
-        slotElement.textContent = `${slot.item.name}\n${slot.quantity}`;
+        // Create icon and quantity display
+        const iconElement = document.createElement('div');
+        iconElement.className = 'item-icon';
+        iconElement.textContent = slot.item.icon;
+
+        const quantityElement = document.createElement('div');
+        quantityElement.className = 'item-quantity';
+        quantityElement.textContent = slot.quantity > 1 ? `${slot.quantity}` : '';
+
+        const nameElement = document.createElement('div');
+        nameElement.className = 'item-name';
+        nameElement.textContent = slot.item.name;
+
+        slotElement.appendChild(iconElement);
+        slotElement.appendChild(quantityElement);
+        slotElement.appendChild(nameElement);
       } else {
-        slotElement.textContent = 'Empty';
+        slotElement.classList.add('empty-slot');
+        slotElement.textContent = '';
       }
 
       // Add click handler for using items

@@ -11,8 +11,8 @@ export interface InventorySlot {
 
 export class Inventory {
   private slots: InventorySlot[] = [];
-  private maxSlots: number = 20; // 20 total inventory slots
-  private hotbarSize: number = 5; // First 5 slots are hotbar
+  private maxSlots: number = 30; // 30 total inventory slots (9 hotbar + 21 main)
+  private hotbarSize: number = 9; // First 9 slots are hotbar
   private selectedHotbarSlot: number = 0;
 
   constructor() {

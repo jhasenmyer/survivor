@@ -105,12 +105,12 @@ export class InputManager {
   }
 
   /**
-   * Check hotbar slot selection (1-5)
+   * Check hotbar slot selection (1-9)
    */
   public getHotbarSlotPressed(): number | null {
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= 9; i++) {
       if (this.isKeyJustPressed(`Digit${i}`)) {
-        return i - 1; // Return 0-4 for slots
+        return i - 1; // Return 0-8 for slots
       }
     }
     return null;

@@ -4,6 +4,7 @@
 
 import * as THREE from 'three';
 import { Entity } from './Entity';
+import { ITEMS } from '../types/Item';
 import type { World } from '../core/World';
 import type { Player } from '../core/Player';
 
@@ -70,19 +71,27 @@ export class WaterSource extends Entity {
   }
 
   /**
-   * Handle interaction - drink water
+   * Handle interaction - drink water or fill bottle
    */
   public onInteract(player: Player): void {
-    // Restore thirst
-    player.consume(0, 50); // 0 hunger, 50 thirst
-    console.log('Drank water, restored 50 thirst!');
+    // Check if player has empty water bottle
+    if (player.hasItem('water_bottle_empty', 1)) {
+      // Fill the bottle
+      player.removeItemById('water_bottle_empty', 1);
+      player.addItem(ITEMS['water_bottle_full'], 1);
+      console.log('Filled water bottle!');
+    } else {
+      // Drink directly
+      player.consume(0, 50); // 0 hunger, 50 thirst
+      console.log('Drank water, restored 50 thirst!');
+    }
   }
 
   /**
    * Get interaction prompt
    */
   public getInteractionPrompt(): string {
-    return 'Press E to drink water';
+    return 'Press E to drink water / fill bottle';
   }
 
   /**
