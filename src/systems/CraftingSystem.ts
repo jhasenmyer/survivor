@@ -9,7 +9,6 @@ import { ITEMS } from '../types/Item';
 export class CraftingSystem {
   private player: Player;
   private isOpen: boolean = false;
-  private selectedRecipeId: string | null = null;
 
   constructor(player: Player) {
     this.player = player;
