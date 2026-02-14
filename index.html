@@ -47,6 +47,233 @@
       border-radius: 50%;
       opacity: 0.6;
     }
+    /* Hotbar */
+    #hotbar {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 5px;
+    }
+    .hotbar-slot {
+      width: 60px;
+      height: 60px;
+      background: rgba(0, 0, 0, 0.7);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 10px;
+      text-align: center;
+      padding: 4px;
+      position: relative;
+    }
+    .hotbar-slot.active {
+      border-color: #4a9eff;
+      box-shadow: 0 0 10px rgba(74, 158, 255, 0.5);
+    }
+    .hotbar-slot-number {
+      position: absolute;
+      top: 2px;
+      left: 4px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    .hotbar-slot-name {
+      font-size: 9px;
+      margin-top: 8px;
+      word-wrap: break-word;
+      max-width: 50px;
+      line-height: 1.1;
+    }
+    .hotbar-slot-quantity {
+      font-size: 14px;
+      font-weight: bold;
+      color: #4a9eff;
+    }
+    /* Full Inventory */
+    #inventory-ui {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      padding: 20px;
+      pointer-events: auto;
+    }
+    #inventory-header {
+      color: white;
+      font-size: 24px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    #inventory-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-top: 20px;
+    }
+    .inventory-slot {
+      width: 100%;
+      aspect-ratio: 1;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 11px;
+      text-align: center;
+      padding: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .inventory-slot:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    .inventory-slot.hotbar-slot-inv {
+      border-color: rgba(74, 158, 255, 0.5);
+    }
+    /* Interaction Prompt */
+    #interaction-prompt {
+      position: absolute;
+      top: 60%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-size: 16px;
+      text-align: center;
+    }
+    /* Death Screen */
+    #death-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+    }
+    #death-message {
+      font-size: 72px;
+      color: #ff0000;
+      text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.8);
+      margin-bottom: 30px;
+    }
+    #respawn-button {
+      padding: 15px 40px;
+      font-size: 24px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      border: 2px solid white;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    #respawn-button:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.05);
+    }
+    /* Loading Screen */
+    #loading-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      z-index: 1000;
+    }
+    #loading-text {
+      color: white;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    #loading-bar {
+      width: 300px;
+      height: 20px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    #loading-progress {
+      height: 100%;
+      background: #4a9eff;
+      width: 0%;
+      transition: width 0.3s;
+    }
+    /* Pause Menu */
+    #pause-menu {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 400px;
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      padding: 30px;
+      pointer-events: auto;
+      text-align: center;
+    }
+    #pause-menu h2 {
+      color: white;
+      font-size: 36px;
+      margin-bottom: 30px;
+    }
+    .menu-button {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      margin: 10px 0;
+      font-size: 18px;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .menu-button:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: #4a9eff;
+    }
+    /* Main Menu */
+    #main-menu {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 400px;
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      padding: 40px;
+      pointer-events: auto;
+      text-align: center;
+      z-index: 1001;
+    }
   </style>
 </head>
 <body>
@@ -58,7 +285,74 @@
       <div id="thirst">Thirst: 100</div>
     </div>
     <div id="crosshair"></div>
+
+    <!-- Hotbar -->
+    <div id="hotbar">
+      <div class="hotbar-slot active" data-slot="0">
+        <span class="hotbar-slot-number">1</span>
+        <span class="hotbar-slot-name">Empty</span>
+      </div>
+      <div class="hotbar-slot" data-slot="1">
+        <span class="hotbar-slot-number">2</span>
+        <span class="hotbar-slot-name">Empty</span>
+      </div>
+      <div class="hotbar-slot" data-slot="2">
+        <span class="hotbar-slot-number">3</span>
+        <span class="hotbar-slot-name">Empty</span>
+      </div>
+      <div class="hotbar-slot" data-slot="3">
+        <span class="hotbar-slot-number">4</span>
+        <span class="hotbar-slot-name">Empty</span>
+      </div>
+      <div class="hotbar-slot" data-slot="4">
+        <span class="hotbar-slot-number">5</span>
+        <span class="hotbar-slot-name">Empty</span>
+      </div>
+    </div>
+
+    <!-- Interaction Prompt -->
+    <div id="interaction-prompt" style="display: none;">
+      Press E to interact
+    </div>
   </div>
+
+  <!-- Full Inventory (hidden by default) -->
+  <div id="inventory-ui" style="display: none;">
+    <div id="inventory-header">Inventory (Press Tab to close)</div>
+    <div id="inventory-grid"></div>
+  </div>
+
+  <!-- Death Screen -->
+  <div id="death-screen" style="display: none;">
+    <div id="death-message">YOU DIED</div>
+    <button id="respawn-button">Respawn</button>
+  </div>
+
+  <!-- Loading Screen -->
+  <div id="loading-screen">
+    <div id="loading-text">Loading...</div>
+    <div id="loading-bar">
+      <div id="loading-progress"></div>
+    </div>
+  </div>
+
+  <!-- Main Menu (Continue/New Game) -->
+  <div id="main-menu" style="display: none;">
+    <h1 style="color: white; font-size: 48px; margin-bottom: 40px;">Survivor</h1>
+    <button class="menu-button" id="continue-button">Continue Game</button>
+    <div id="save-info" style="color: rgba(255,255,255,0.6); font-size: 14px; margin-top: 10px; margin-bottom: 20px;"></div>
+    <button class="menu-button" id="new-game-button">New Game</button>
+  </div>
+
+  <!-- Pause Menu -->
+  <div id="pause-menu" style="display: none;">
+    <h2>Paused</h2>
+    <button class="menu-button" id="resume-button">Resume</button>
+    <button class="menu-button" id="save-button">Save Game</button>
+    <button class="menu-button" id="settings-button">Settings</button>
+    <button class="menu-button" id="exit-button">Exit to Menu</button>
+  </div>
+
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

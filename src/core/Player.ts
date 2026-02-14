@@ -1,16 +1,22 @@
 import * as THREE from 'three';
 import { InputManager } from './InputManager';
+import { Inventory } from '../systems/InventorySystem';
+import { ItemDefinition } from '../types/Item';
 
 export class Player {
   public camera: THREE.PerspectiveCamera;
   private velocity: THREE.Vector3;
   private direction: THREE.Vector3;
   private inputManager: InputManager;
+  public inventory: Inventory;
 
   // Player stats
   private health: number = 100;
   private hunger: number = 100;
   private thirst: number = 100;
+  private maxHealth: number = 100;
+  private maxHunger: number = 100;
+  private maxThirst: number = 100;
 
   // Movement settings
   private readonly MOVE_SPEED = 10;
@@ -36,6 +42,9 @@ export class Player {
     this.velocity = new THREE.Vector3();
     this.direction = new THREE.Vector3();
     this.euler = new THREE.Euler(0, 0, 0, 'YXZ');
+
+    // Initialize inventory
+    this.inventory = new Inventory();
 
     this.setupPointerLock();
   }
@@ -151,8 +160,44 @@ export class Player {
       }
     }
 
+    // Update survival stats
+    this.updateSurvivalStats(delta);
+
     // Update HUD
     this.updateHUD();
+  }
+
+  /**
+   * Update survival stats (hunger, thirst depletion)
+   */
+  private updateSurvivalStats(delta: number): void {
+    // Deplete hunger and thirst over time
+    this.hunger = Math.max(0, this.hunger - 0.5 * delta); // Lose 0.5 hunger per second
+    this.thirst = Math.max(0, this.thirst - 0.8 * delta); // Lose 0.8 thirst per second
+
+    // Take damage if starving or dehydrated
+    if (this.hunger === 0 || this.thirst === 0) {
+      this.takeDamage(5 * delta); // Lose 5 health per second when starving/dehydrated
+    }
+
+    // Check for death
+    if (this.health <= 0) {
+      this.onDeath();
+    }
+  }
+
+  /**
+   * Handle player death
+   */
+  private onDeath(): void {
+    this.health = 0;
+    // Show death screen
+    const deathScreen = document.getElementById('death-screen');
+    if (deathScreen) {
+      deathScreen.style.display = 'flex';
+    }
+    // Unlock pointer so player can click respawn button
+    document.exitPointerLock();
   }
 
   private updateHUD(): void {
@@ -168,4 +213,96 @@ export class Player {
   public getHealth(): number { return this.health; }
   public getHunger(): number { return this.hunger; }
   public getThirst(): number { return this.thirst; }
+
+  /**
+   * Take damage
+   */
+  public takeDamage(amount: number): void {
+    this.health = Math.max(0, this.health - amount);
+    this.updateHUD();
+  }
+
+  /**
+   * Heal player
+   */
+  public heal(amount: number): void {
+    this.health = Math.min(this.maxHealth, this.health + amount);
+    this.updateHUD();
+    console.log(`Healed ${amount} health`);
+  }
+
+  /**
+   * Consume food/water
+   */
+  public consume(hungerRestore: number, thirstRestore: number): void {
+    this.hunger = Math.min(this.maxHunger, this.hunger + hungerRestore);
+    this.thirst = Math.min(this.maxThirst, this.thirst + thirstRestore);
+    this.updateHUD();
+
+    if (hungerRestore > 0) console.log(`Restored ${hungerRestore} hunger`);
+    if (thirstRestore > 0) console.log(`Restored ${thirstRestore} thirst`);
+  }
+
+  /**
+   * Add item to inventory (helper method)
+   */
+  public addItem(item: ItemDefinition, quantity: number = 1): boolean {
+    return this.inventory.addItem(item, quantity);
+  }
+
+  /**
+   * Remove item from inventory (helper method)
+   */
+  public removeItemById(itemId: string, quantity: number = 1): boolean {
+    return this.inventory.removeItemById(itemId, quantity);
+  }
+
+  /**
+   * Check if inventory has item
+   */
+  public hasItem(itemId: string, quantity: number = 1): boolean {
+    return this.inventory.hasItem(itemId, quantity);
+  }
+
+  /**
+   * Respawn player
+   */
+  public respawn(): void {
+    this.health = this.maxHealth;
+    this.hunger = this.maxHunger;
+    this.thirst = this.maxThirst;
+    this.camera.position.set(0, 1.6, 5);
+    this.velocity.set(0, 0, 0);
+
+    // Hide death screen
+    const deathScreen = document.getElementById('death-screen');
+    if (deathScreen) {
+      deathScreen.style.display = 'none';
+    }
+
+    this.updateHUD();
+  }
+
+  /**
+   * Get player position
+   */
+  public getPosition(): THREE.Vector3 {
+    return this.camera.position.clone();
+  }
+
+  /**
+   * Get player direction
+   */
+  public getDirection(): THREE.Vector3 {
+    const direction = new THREE.Vector3();
+    this.camera.getWorldDirection(direction);
+    return direction;
+  }
+
+  /**
+   * Check if pointer is locked
+   */
+  public isPointerLocked(): boolean {
+    return this.isLocked;
+  }
 }

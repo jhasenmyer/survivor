@@ -1,4 +1,9 @@
 import * as THREE from 'three';
+import { EntityManager } from '../systems/EntityManager';
+import { Tree } from '../entities/Tree';
+import { Deer } from '../entities/Deer';
+import { Rabbit } from '../entities/Rabbit';
+import type { Player } from './Player';
 
 interface Chunk {
   key: string;
@@ -10,6 +15,8 @@ interface Chunk {
 export class World {
   private scene: THREE.Scene;
   private chunks: Map<string, Chunk> = new Map();
+  public entityManager: EntityManager;
+  public player: Player | null = null;
 
   // Chunk settings
   private readonly CHUNK_SIZE = 50;
@@ -23,8 +30,18 @@ export class World {
   constructor(scene: THREE.Scene) {
     this.scene = scene;
 
+    // Initialize entity manager (will be fully set up after world creation)
+    this.entityManager = new EntityManager(scene, this);
+
     // Generate initial chunks around spawn point
     this.loadChunksAroundPosition(0, 0);
+  }
+
+  /**
+   * Set player reference (needed for animal AI)
+   */
+  public setPlayer(player: Player): void {
+    this.player = player;
   }
 
   // Seeded random number generator for consistent chunk generation
@@ -61,8 +78,11 @@ export class World {
     const trees = this.generateTreesForChunk(chunkX, chunkZ);
     trees.forEach(tree => {
       chunk.objects.push(tree);
-      this.scene.add(tree);
+      // Note: tree is already added to scene by entity manager
     });
+
+    // Generate animals for this chunk
+    this.generateAnimalsForChunk(chunkX, chunkZ);
 
     return chunk;
   }
@@ -91,12 +111,8 @@ export class World {
     // Add height variation using world coordinates for continuity
     const positions = geometry.attributes.position;
     for (let i = 0; i < positions.count; i++) {
-      const localX = positions.getX(i);
-      const localZ = positions.getY(i);
-      const x = worldX + localX;
-      const z = worldZ + localZ;
-
-      const height = Math.sin(x * 0.1) * Math.cos(z * 0.1) * 2;
+      // Flat terrain for now (no height variation)
+      const height = 0;
       positions.setZ(i, height);
     }
     geometry.computeVertexNormals();
@@ -151,10 +167,65 @@ export class World {
       // Place tree at correct terrain height
       const terrainHeight = this.getTerrainHeight(x, z);
       const treeGroup = this.createTree(x, z, scale, seed + i * 5, terrainHeight);
+
+      // Create Tree entity
+      const position = new THREE.Vector3(x, terrainHeight, z);
+      const treeEntity = new Tree(position, scale, treeGroup);
+      this.entityManager.addEntity(treeEntity);
+
       trees.push(treeGroup);
     }
 
     return trees;
+  }
+
+  /**
+   * Generate animals for a chunk
+   */
+  private generateAnimalsForChunk(chunkX: number, chunkZ: number): void {
+    const worldX = chunkX * this.CHUNK_SIZE;
+    const worldZ = chunkZ * this.CHUNK_SIZE;
+
+    // Use chunk coordinates as seed for consistent generation
+    const seed = chunkX * 73856093 ^ chunkZ * 19349663;
+
+    // Generate 2-5 animals per chunk
+    const animalCount = 2 + Math.floor(this.seededRandom(seed) * 4);
+
+    for (let i = 0; i < animalCount; i++) {
+      const randX = this.seededRandom(seed + i * 10 + 100);
+      const randZ = this.seededRandom(seed + i * 10 + 101);
+      const randType = this.seededRandom(seed + i * 10 + 102);
+
+      const localX = (randX - 0.5) * this.CHUNK_SIZE * 0.8;
+      const localZ = (randZ - 0.5) * this.CHUNK_SIZE * 0.8;
+      const x = worldX + localX;
+      const z = worldZ + localZ;
+
+      // Skip animals too close to spawn (0,0)
+      if (chunkX === 0 && chunkZ === 0 && Math.sqrt(localX * localX + localZ * localZ) < 15) {
+        continue;
+      }
+
+      const terrainHeight = this.getTerrainHeight(x, z);
+      // Position at ground level (mesh feet start at Y=0 relative to position)
+      const position = new THREE.Vector3(x, terrainHeight, z);
+
+      // 60% deer, 40% rabbit
+      let animal;
+      if (randType < 0.6) {
+        animal = new Deer(position);
+      } else {
+        animal = new Rabbit(position);
+      }
+
+      // Set player reference if available
+      if (this.player) {
+        animal.setPlayerReference(this.player);
+      }
+
+      this.entityManager.addEntity(animal);
+    }
   }
 
   private createTree(x: number, z: number, scale: number, seed: number, terrainHeight: number = 0): THREE.Group {
@@ -281,9 +352,9 @@ export class World {
     }
   }
 
-  public getTerrainHeight(x: number, z: number): number {
-    // Use same height function as terrain generation
-    return Math.sin(x * 0.1) * Math.cos(z * 0.1) * 2;
+  public getTerrainHeight(_x: number, _z: number): number {
+    // Flat terrain for now
+    return 0;
   }
 
   public update(_delta: number): void {
