@@ -39,41 +39,37 @@ export class ItemEntity extends Entity {
   private createMesh(): void {
     const group = new THREE.Group();
 
-    // Create a simple box/sphere based on item type
-    let geometry: THREE.BufferGeometry;
-    let color: number;
+    // Create a canvas texture with the emoji
+    const canvas = document.createElement('canvas');
+    const size = 256;
+    canvas.width = size;
+    canvas.height = size;
+    const context = canvas.getContext('2d')!;
 
-    switch (this.item.type) {
-      case 'tool':
-        geometry = new THREE.BoxGeometry(0.3, 0.1, 0.5);
-        color = 0x888888; // Gray
-        break;
-      case 'resource':
-        geometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
-        color = 0x8B4513; // Brown
-        break;
-      case 'consumable':
-        geometry = new THREE.SphereGeometry(0.2, 8, 8);
-        color = 0xFF6B6B; // Red
-        break;
-      default:
-        geometry = new THREE.BoxGeometry(0.25, 0.25, 0.25);
-        color = 0xFFFFFF; // White
-    }
+    // Clear canvas
+    context.clearRect(0, 0, size, size);
 
-    const material = new THREE.MeshPhongMaterial({
-      color,
-      emissive: color,
-      emissiveIntensity: 0.2,
+    // Draw emoji
+    context.font = `${size * 0.8}px Arial`;
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(this.item.icon, size / 2, size / 2);
+
+    // Create texture from canvas
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+
+    // Create sprite with emoji texture
+    const spriteMaterial = new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
     });
+    const sprite = new THREE.Sprite(spriteMaterial);
+    sprite.scale.set(0.6, 0.6, 1); // Size of the emoji sprite
 
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
+    group.add(sprite);
 
-    group.add(mesh);
-
-    // Add a glow/highlight effect
+    // Add a glow/highlight effect (circle behind the emoji)
     const glowGeometry = new THREE.SphereGeometry(0.35, 16, 16);
     const glowMaterial = new THREE.MeshBasicMaterial({
       color: 0xFFFF00,
