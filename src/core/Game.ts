@@ -545,8 +545,12 @@ export class Game {
     // Handle input
     this.handleInput();
 
-    // Update game systems with terrain collision
-    this.player.update(delta, (x, z) => this.world.getTerrainHeight(x, z));
+    // Update game systems with terrain and structure collision
+    this.player.update(
+      delta,
+      (x, z) => this.world.getTerrainHeight(x, z),
+      (x, z, radius) => this.world.checkStructureCollision(x, z, radius)
+    );
 
     // Update world chunks based on player position
     this.world.updatePlayerPosition(

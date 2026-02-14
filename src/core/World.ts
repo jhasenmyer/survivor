@@ -5,6 +5,8 @@ import { Deer } from '../entities/Deer';
 import { Rabbit } from '../entities/Rabbit';
 import { WaterSource } from '../entities/WaterSource';
 import { Rock } from '../entities/Rock';
+import { AbandonedStructure } from '../entities/AbandonedStructure';
+import { getRandomStructureType } from '../types/AbandonedStructureType';
 import type { Player } from './Player';
 
 interface Chunk {
@@ -91,6 +93,9 @@ export class World {
 
     // Generate rocks for this chunk
     this.generateRocksForChunk(chunkX, chunkZ);
+
+    // Generate abandoned structures for this chunk (rare)
+    this.generateAbandonedStructuresForChunk(chunkX, chunkZ);
 
     return chunk;
   }
@@ -320,6 +325,60 @@ export class World {
     }
   }
 
+  /**
+   * Generate abandoned structures for a chunk (rare)
+   */
+  private generateAbandonedStructuresForChunk(chunkX: number, chunkZ: number): void {
+    const worldX = chunkX * this.CHUNK_SIZE;
+    const worldZ = chunkZ * this.CHUNK_SIZE;
+
+    // Use chunk coordinates as seed for consistent generation
+    const seed = chunkX * 73856093 ^ chunkZ * 19349663;
+
+    // Low chance of structure spawning (10% per chunk)
+    const spawnChance = this.seededRandom(seed + 500);
+    if (spawnChance > 0.1) {
+      return; // No structure in this chunk
+    }
+
+    // Choose structure type based on weighted rarity
+    const structureRand = this.seededRandom(seed + 501);
+    const structureType = getRandomStructureType(structureRand);
+
+    // Random position within chunk, avoiding edges
+    const randX = this.seededRandom(seed + 502);
+    const randZ = this.seededRandom(seed + 503);
+
+    const localX = (randX - 0.5) * this.CHUNK_SIZE * 0.6; // Keep away from edges
+    const localZ = (randZ - 0.5) * this.CHUNK_SIZE * 0.6;
+    const x = worldX + localX;
+    const z = worldZ + localZ;
+
+    // Skip structures too close to spawn (0,0) - keep spawn area clear
+    if (chunkX === 0 && chunkZ === 0 && Math.sqrt(localX * localX + localZ * localZ) < 20) {
+      return;
+    }
+
+    const terrainHeight = this.getTerrainHeight(x, z);
+    const position = new THREE.Vector3(x, terrainHeight, z);
+
+    // Create structure
+    const structure = new AbandonedStructure(position, structureType);
+    this.entityManager.addEntity(structure);
+
+    // Spawn loot inside structure with seeded random
+    const lootSeed = seed + 600;
+    let lootIndex = 0;
+    structure.spawnLoot(this, () => {
+      lootIndex++;
+      return this.seededRandom(lootSeed + lootIndex);
+    });
+
+    console.log(
+      `Generated ${structureType.name} at chunk (${chunkX}, ${chunkZ}) position (${Math.round(x)}, ${Math.round(z)})`
+    );
+  }
+
   private createTree(x: number, z: number, scale: number, seed: number, terrainHeight: number = 0): THREE.Group {
     const treeGroup = new THREE.Group();
 
@@ -442,6 +501,74 @@ export class World {
       this.lastPlayerChunkX = chunkX;
       this.lastPlayerChunkZ = chunkZ;
     }
+  }
+
+  /**
+   * Check if a position collides with any structures
+   * Returns true if collision detected
+   */
+  public checkStructureCollision(x: number, z: number, playerRadius: number = 0.5): boolean {
+    const entities = this.entityManager.getAllEntities();
+
+    for (const entity of entities) {
+      // Only check AbandonedStructure entities
+      if (entity.constructor.name === 'AbandonedStructure') {
+        const structure = entity as any; // Cast to access structure properties
+        const structureType = structure.getStructureType();
+
+        if (structureType) {
+          const { width, depth } = structureType.size;
+          const structurePos = entity.position;
+          const wallThickness = 0.3;
+
+          // Convert to local coordinates
+          const localX = x - structurePos.x;
+          const localZ = z - structurePos.z;
+
+          const halfWidth = width / 2;
+          const halfDepth = depth / 2;
+
+          // Match the actual geometry from AbandonedStructure.ts:
+          // - Front/back walls: full width at Z = ±depth/2
+          // - Left/right walls: only extend from Z = -(depth-2)/2 to Z = +(depth-2)/2
+          // This creates doorway gaps at the corners
+
+          const sideWallHalfDepth = (depth - 2) / 2; // Side walls are shortened
+
+          // Check front wall (full width at +Z)
+          if (localZ > halfDepth - wallThickness && localZ < halfDepth + wallThickness) {
+            if (Math.abs(localX) < halfWidth + playerRadius) {
+              return true;
+            }
+          }
+
+          // Check back wall (full width at -Z)
+          if (localZ < -halfDepth + wallThickness && localZ > -halfDepth - wallThickness) {
+            if (Math.abs(localX) < halfWidth + playerRadius) {
+              return true;
+            }
+          }
+
+          // Check left wall (shortened, only middle section)
+          if (localX < -halfWidth + wallThickness && localX > -halfWidth - playerRadius) {
+            // Only block if within the wall's Z range
+            if (Math.abs(localZ) < sideWallHalfDepth) {
+              return true;
+            }
+          }
+
+          // Check right wall (shortened, only middle section)
+          if (localX > halfWidth - wallThickness && localX < halfWidth + playerRadius) {
+            // Only block if within the wall's Z range
+            if (Math.abs(localZ) < sideWallHalfDepth) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+
+    return false;
   }
 
   public getTerrainHeight(_x: number, _z: number): number {
