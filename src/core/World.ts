@@ -3,6 +3,7 @@ import { EntityManager } from '../systems/EntityManager';
 import { Tree } from '../entities/Tree';
 import { Deer } from '../entities/Deer';
 import { Rabbit } from '../entities/Rabbit';
+import { WaterSource } from '../entities/WaterSource';
 import type { Player } from './Player';
 
 interface Chunk {
@@ -22,6 +23,7 @@ export class World {
   private readonly CHUNK_SIZE = 50;
   private readonly VIEW_DISTANCE = 3; // Load chunks within 3 chunks of player
   private readonly TREE_DENSITY = 20; // Trees per chunk
+  private readonly WATER_SOURCE_DENSITY = 1.5; // Average water sources per chunk (1-2)
   private readonly CHUNK_OVERLAP = 0.1; // Small overlap to prevent gaps
 
   private lastPlayerChunkX: number = 0;
@@ -83,6 +85,9 @@ export class World {
 
     // Generate animals for this chunk
     this.generateAnimalsForChunk(chunkX, chunkZ);
+
+    // Generate water sources for this chunk
+    this.generateWaterSourcesForChunk(chunkX, chunkZ);
 
     return chunk;
   }
@@ -225,6 +230,52 @@ export class World {
       }
 
       this.entityManager.addEntity(animal);
+    }
+  }
+
+  /**
+   * Generate water sources for a chunk
+   */
+  private generateWaterSourcesForChunk(chunkX: number, chunkZ: number): void {
+    const worldX = chunkX * this.CHUNK_SIZE;
+    const worldZ = chunkZ * this.CHUNK_SIZE;
+
+    // Use chunk coordinates as seed for consistent generation
+    const seed = chunkX * 73856093 ^ chunkZ * 19349663;
+
+    // Generate 0-2 water sources per chunk (average ~1.5)
+    const waterSourceCount = Math.floor(this.seededRandom(seed + 500) * 3);
+
+    for (let i = 0; i < waterSourceCount; i++) {
+      const randX = this.seededRandom(seed + i * 10 + 200);
+      const randZ = this.seededRandom(seed + i * 10 + 201);
+      const randSize = this.seededRandom(seed + i * 10 + 202);
+
+      const localX = (randX - 0.5) * this.CHUNK_SIZE * 0.7;
+      const localZ = (randZ - 0.5) * this.CHUNK_SIZE * 0.7;
+      const x = worldX + localX;
+      const z = worldZ + localZ;
+
+      // Skip water sources too close to spawn (0,0)
+      if (chunkX === 0 && chunkZ === 0 && Math.sqrt(localX * localX + localZ * localZ) < 12) {
+        continue;
+      }
+
+      // Varied sizes: small (1.5-2.5), medium (2.5-3.5), large (3.5-5)
+      let radius: number;
+      if (randSize < 0.5) {
+        radius = 1.5 + randSize * 2; // Small
+      } else if (randSize < 0.8) {
+        radius = 2.5 + (randSize - 0.5) * 3.3; // Medium
+      } else {
+        radius = 3.5 + (randSize - 0.8) * 7.5; // Large
+      }
+
+      const terrainHeight = this.getTerrainHeight(x, z);
+      const position = new THREE.Vector3(x, terrainHeight, z);
+
+      const waterSource = new WaterSource(position, radius);
+      this.entityManager.addEntity(waterSource);
     }
   }
 

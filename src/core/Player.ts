@@ -189,7 +189,7 @@ export class Player {
   private updateSurvivalStats(delta: number): void {
     // Deplete hunger and thirst over time
     this.hunger = Math.max(0, this.hunger - 0.5 * delta); // Lose 0.5 hunger per second
-    this.thirst = Math.max(0, this.thirst - 0.8 * delta); // Lose 0.8 thirst per second
+    this.thirst = Math.max(0, this.thirst - 0.4 * delta); // Lose 0.4 thirst per second
 
     // Take damage if starving or dehydrated
     if (this.hunger === 0 || this.thirst === 0) {
