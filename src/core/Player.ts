@@ -88,7 +88,11 @@ export class Player {
     });
   }
 
-  public update(delta: number, getTerrainHeight?: (x: number, z: number) => number): void {
+  public update(
+    delta: number,
+    getTerrainHeight?: (x: number, z: number) => number,
+    checkStructureCollision?: (x: number, z: number, radius: number) => boolean
+  ): void {
     if (!this.isLocked) return;
 
     // Get input direction
@@ -116,6 +120,27 @@ export class Player {
 
     this.velocity.x = moveDirection.x * this.MOVE_SPEED;
     this.velocity.z = moveDirection.z * this.MOVE_SPEED;
+
+    // Structure collision - check if new position would collide
+    if (checkStructureCollision) {
+      const newX = this.camera.position.x + this.velocity.x * delta;
+      const newZ = this.camera.position.z + this.velocity.z * delta;
+      const playerRadius = 0.5;
+
+      // Check collision at new position
+      if (checkStructureCollision(newX, newZ, playerRadius)) {
+        // Try sliding along walls by checking X and Z separately
+        const xOnly = checkStructureCollision(newX, this.camera.position.z, playerRadius);
+        const zOnly = checkStructureCollision(this.camera.position.x, newZ, playerRadius);
+
+        if (xOnly) {
+          this.velocity.x = 0; // Block X movement
+        }
+        if (zOnly) {
+          this.velocity.z = 0; // Block Z movement
+        }
+      }
+    }
 
     // Terrain collision - check BEFORE moving
     const EYE_HEIGHT = 1.6;
