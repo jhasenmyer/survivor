@@ -7,6 +7,7 @@ import { AudioSystem } from '../systems/AudioSystem';
 import { TimeSystem } from '../systems/TimeSystem';
 import { InteractionSystem } from '../systems/InteractionSystem';
 import { SaveSystem } from '../systems/SaveSystem';
+import { BuildingSystem } from '../systems/BuildingSystem';
 import { ITEMS } from '../types/Item';
 
 export class Game {
@@ -24,6 +25,7 @@ export class Game {
   private timeSystem: TimeSystem;
   private interactionSystem: InteractionSystem;
   private saveSystem: SaveSystem;
+  private buildingSystem: BuildingSystem;
 
   // UI state
   private inventoryOpen: boolean = false;
@@ -100,6 +102,11 @@ export class Game {
     console.log('Creating SaveSystem');
     this.saveSystem = new SaveSystem(this.player, this.world, this.timeSystem);
     console.log('SaveSystem created');
+
+    // Initialize building system
+    console.log('Creating BuildingSystem');
+    this.buildingSystem = new BuildingSystem(this.player, this.world, this.scene);
+    console.log('BuildingSystem created');
 
     // Setup UI handlers
     this.setupUIHandlers();
@@ -436,8 +443,13 @@ export class Game {
     // Update entities
     this.world.entityManager.update(delta);
 
-    // Update interaction system
-    this.interactionSystem.update();
+    // Update interaction system (skip if in build mode)
+    if (!this.buildingSystem.isActive()) {
+      this.interactionSystem.update();
+    }
+
+    // Update building system ghost placement
+    this.buildingSystem.updateGhostPlacement(this.player.camera);
 
     // Auto-pickup nearby items
     this.checkAutoPickup();
@@ -500,10 +512,26 @@ export class Game {
       return;
     }
 
-    // Interaction (E key)
-    if (this.inputManager.isInteractPressed()) {
-      this.interactionSystem.interact();
-      this.updateHotbarUI();
+    // Build mode toggle (B key)
+    if (this.inputManager.isBuildModeToggled()) {
+      this.buildingSystem.toggleBuildMode();
+    }
+
+    // Handle inputs based on mode
+    if (this.buildingSystem.isActive()) {
+      // Build mode inputs
+      if (this.inputManager.isInteractPressed()) {
+        if (this.buildingSystem.placeStructure()) {
+          this.updateHotbarUI(); // Update UI after placing (resources used)
+        }
+      }
+    } else {
+      // Normal mode inputs
+      // Interaction (E key)
+      if (this.inputManager.isInteractPressed()) {
+        this.interactionSystem.interact();
+        this.updateHotbarUI();
+      }
     }
 
     // Hotbar slot selection (1-5 keys)
