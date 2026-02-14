@@ -170,6 +170,13 @@ export abstract class Animal extends Entity {
     const damage = equippedItem.damage || 10;
     this.takeDamage(damage);
 
+    // Damage the weapon
+    const selectedSlot = player.inventory.getSelectedSlot();
+    const toolBroke = player.inventory.damageTool(selectedSlot, 1);
+    if (toolBroke && player.notificationCallback) {
+      player.notificationCallback(`Your ${equippedItem.name} broke!`, 'error');
+    }
+
     console.log(`Hit ${this.constructor.name} for ${damage} damage!`);
   }
 

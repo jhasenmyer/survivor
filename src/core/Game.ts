@@ -86,6 +86,11 @@ export class Game {
     this.player = new Player(this.inputManager);
     console.log('Player created');
 
+    // Set up notification callback so entities can show notifications
+    this.player.notificationCallback = (message: string, type?: 'error' | 'success' | 'info' | 'warning') => {
+      this.showNotification(message, type);
+    };
+
     console.log('Creating World');
     this.world = new World(this.scene);
     this.world.setPlayer(this.player);
@@ -212,10 +217,38 @@ export class Game {
           if (iconElement) iconElement.textContent = slot.item.icon;
           if (quantityElement) quantityElement.textContent = slot.quantity > 1 ? `${slot.quantity}` : '';
           if (nameElement) nameElement.textContent = slot.item.name;
+
+          // Update durability bar for tools
+          let durabilityContainer = slotElement.querySelector('.hotbar-slot-durability');
+          if (slot.item.durability) {
+            const durabilityPercent = this.player.inventory.getDurabilityPercentage(index) || 100;
+
+            if (!durabilityContainer) {
+              durabilityContainer = document.createElement('div');
+              durabilityContainer.className = 'hotbar-slot-durability';
+              const durabilityBar = document.createElement('div');
+              durabilityBar.className = 'hotbar-slot-durability-bar';
+              durabilityContainer.appendChild(durabilityBar);
+              slotElement.appendChild(durabilityContainer);
+            }
+
+            const durabilityBar = durabilityContainer.querySelector('.hotbar-slot-durability-bar') as HTMLElement;
+            if (durabilityBar) {
+              durabilityBar.style.width = `${durabilityPercent}%`;
+            }
+          } else if (durabilityContainer) {
+            durabilityContainer.remove();
+          }
         } else {
           if (iconElement) iconElement.textContent = '';
           if (quantityElement) quantityElement.textContent = '';
           if (nameElement) nameElement.textContent = 'Empty';
+
+          // Remove durability bar if exists
+          const durabilityContainer = slotElement.querySelector('.hotbar-slot-durability');
+          if (durabilityContainer) {
+            durabilityContainer.remove();
+          }
         }
 
         // Update active state
@@ -301,6 +334,21 @@ export class Game {
         slotElement.appendChild(iconElement);
         slotElement.appendChild(quantityElement);
         slotElement.appendChild(nameElement);
+
+        // Add durability bar for tools
+        if (slot.item.durability) {
+          const durabilityPercent = this.player.inventory.getDurabilityPercentage(index) || 100;
+
+          const durabilityContainer = document.createElement('div');
+          durabilityContainer.className = 'item-durability';
+
+          const durabilityBar = document.createElement('div');
+          durabilityBar.className = 'item-durability-bar';
+          durabilityBar.style.width = `${durabilityPercent}%`;
+
+          durabilityContainer.appendChild(durabilityBar);
+          slotElement.appendChild(durabilityContainer);
+        }
       } else {
         slotElement.classList.add('empty-slot');
         slotElement.textContent = '';
@@ -643,6 +691,24 @@ export class Game {
     if (hud) hud.style.display = 'block';
     if (hotbar) hotbar.style.display = 'flex';
     if (crosshair) crosshair.style.display = 'block';
+  }
+
+  /**
+   * Show a notification message to the player
+   */
+  public showNotification(message: string, type: 'error' | 'success' | 'info' | 'warning' = 'error'): void {
+    const notificationArea = document.getElementById('notification-area');
+    if (!notificationArea) return;
+
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    notificationArea.appendChild(notification);
+
+    // Auto-remove after 3 seconds (matching CSS animation duration)
+    setTimeout(() => {
+      notification.remove();
+    }, 3000);
   }
 
   public onWindowResize(): void {

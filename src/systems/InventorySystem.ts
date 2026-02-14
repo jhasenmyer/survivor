@@ -7,6 +7,7 @@ import { ItemDefinition } from '../types/Item';
 export interface InventorySlot {
   item: ItemDefinition | null;
   quantity: number;
+  currentDurability?: number; // For tools - tracks current durability
 }
 
 export class Inventory {
@@ -55,6 +56,7 @@ export class Inventory {
       this.slots[emptySlot] = {
         item: item,
         quantity: amountToAdd,
+        currentDurability: item.durability, // Initialize durability for tools
       };
       quantity -= amountToAdd;
     }
@@ -246,6 +248,70 @@ export class Inventory {
   }
 
   /**
+   * Damage a tool in a specific slot
+   */
+  public damageTool(slotIndex: number, damageAmount: number = 1): boolean {
+    if (slotIndex < 0 || slotIndex >= this.slots.length) {
+      return false;
+    }
+
+    const slot = this.slots[slotIndex];
+    if (!slot.item || !slot.item.durability) {
+      return false; // Not a tool or no durability
+    }
+
+    // Initialize durability if not set
+    if (slot.currentDurability === undefined) {
+      slot.currentDurability = slot.item.durability;
+    }
+
+    // Apply damage
+    slot.currentDurability = Math.max(0, slot.currentDurability - damageAmount);
+
+    // Remove tool if broken
+    if (slot.currentDurability === 0) {
+      console.log(`${slot.item.name} broke!`);
+      this.removeItem(slotIndex, 1);
+      return true; // Tool broke
+    }
+
+    return false; // Tool damaged but not broken
+  }
+
+  /**
+   * Get durability percentage for a tool
+   */
+  public getDurabilityPercentage(slotIndex: number): number | null {
+    if (slotIndex < 0 || slotIndex >= this.slots.length) {
+      return null;
+    }
+
+    const slot = this.slots[slotIndex];
+    if (!slot.item || !slot.item.durability) {
+      return null; // Not a tool
+    }
+
+    const current = slot.currentDurability ?? slot.item.durability;
+    return (current / slot.item.durability) * 100;
+  }
+
+  /**
+   * Get current durability for a tool
+   */
+  public getCurrentDurability(slotIndex: number): number | null {
+    if (slotIndex < 0 || slotIndex >= this.slots.length) {
+      return null;
+    }
+
+    const slot = this.slots[slotIndex];
+    if (!slot.item || !slot.item.durability) {
+      return null;
+    }
+
+    return slot.currentDurability ?? slot.item.durability;
+  }
+
+  /**
    * Serialize inventory for saving
    */
   public serialize(): any {
@@ -253,6 +319,7 @@ export class Inventory {
       slots: this.slots.map((slot) => ({
         itemId: slot.item?.id || null,
         quantity: slot.quantity,
+        currentDurability: slot.currentDurability,
       })),
       selectedHotbarSlot: this.selectedHotbarSlot,
     };
@@ -273,6 +340,7 @@ export class Inventory {
             this.slots[i] = {
               item: item,
               quantity: slotData.quantity,
+              currentDurability: slotData.currentDurability,
             };
           }
         }

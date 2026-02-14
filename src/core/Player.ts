@@ -9,6 +9,7 @@ export class Player {
   private direction: THREE.Vector3;
   private inputManager: InputManager;
   public inventory: Inventory;
+  public notificationCallback?: (message: string, type?: 'error' | 'success' | 'info' | 'warning') => void;
 
   // Player stats
   private health: number = 100;

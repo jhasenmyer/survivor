@@ -83,6 +83,24 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A wooden stick. Used for crafting.',
   },
 
+  flint: {
+    id: 'flint',
+    name: 'Flint',
+    icon: '🪨',
+    type: ItemType.RESOURCE,
+    maxStack: 50,
+    description: 'Sharp flint stone. Used for making basic tools.',
+  },
+
+  iron_ore: {
+    id: 'iron_ore',
+    name: 'Iron Ore',
+    icon: '⛏️',
+    type: ItemType.RESOURCE,
+    maxStack: 50,
+    description: 'Raw iron ore. Can be smelted into iron.',
+  },
+
   // Food
   raw_meat: {
     id: 'raw_meat',

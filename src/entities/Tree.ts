@@ -56,6 +56,13 @@ export class Tree extends Entity {
     this.chopCount++;
     console.log(`Chopped tree ${this.chopCount}/${this.requiredChops} times`);
 
+    // Damage the axe
+    const selectedSlot = player.inventory.getSelectedSlot();
+    const toolBroke = player.inventory.damageTool(selectedSlot, 1);
+    if (toolBroke && player.notificationCallback) {
+      player.notificationCallback('Your axe broke!', 'error');
+    }
+
     // Play chop sound
     // TODO: audioSystem.playSound3D('tree_chop', this.position);
 

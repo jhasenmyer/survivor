@@ -4,6 +4,7 @@ import { Tree } from '../entities/Tree';
 import { Deer } from '../entities/Deer';
 import { Rabbit } from '../entities/Rabbit';
 import { WaterSource } from '../entities/WaterSource';
+import { Rock } from '../entities/Rock';
 import type { Player } from './Player';
 
 interface Chunk {
@@ -87,6 +88,9 @@ export class World {
 
     // Generate water sources for this chunk
     this.generateWaterSourcesForChunk(chunkX, chunkZ);
+
+    // Generate rocks for this chunk
+    this.generateRocksForChunk(chunkX, chunkZ);
 
     return chunk;
   }
@@ -275,6 +279,44 @@ export class World {
 
       const waterSource = new WaterSource(position, radius);
       this.entityManager.addEntity(waterSource);
+    }
+  }
+
+  /**
+   * Generate rocks for a chunk
+   */
+  private generateRocksForChunk(chunkX: number, chunkZ: number): void {
+    const worldX = chunkX * this.CHUNK_SIZE;
+    const worldZ = chunkZ * this.CHUNK_SIZE;
+
+    // Use chunk coordinates as seed for consistent generation
+    const seed = chunkX * 73856093 ^ chunkZ * 19349663;
+
+    // Generate 3-6 rocks per chunk
+    const rockCount = 3 + Math.floor(this.seededRandom(seed + 300) * 4);
+
+    for (let i = 0; i < rockCount; i++) {
+      const randX = this.seededRandom(seed + i * 10 + 400);
+      const randZ = this.seededRandom(seed + i * 10 + 401);
+      const randType = this.seededRandom(seed + i * 10 + 402);
+
+      const localX = (randX - 0.5) * this.CHUNK_SIZE * 0.8;
+      const localZ = (randZ - 0.5) * this.CHUNK_SIZE * 0.8;
+      const x = worldX + localX;
+      const z = worldZ + localZ;
+
+      // Skip rocks too close to spawn (0,0)
+      if (chunkX === 0 && chunkZ === 0 && Math.sqrt(localX * localX + localZ * localZ) < 12) {
+        continue;
+      }
+
+      const terrainHeight = this.getTerrainHeight(x, z);
+      const position = new THREE.Vector3(x, terrainHeight, z);
+
+      // 70% regular stone, 30% flint
+      const rockType = randType < 0.7 ? 'stone' : 'flint';
+      const rock = new Rock(position, rockType);
+      this.entityManager.addEntity(rock);
     }
   }
 
