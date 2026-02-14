@@ -33,7 +33,7 @@ export class Game {
     // Initialize game systems
     this.clock = new THREE.Clock();
     this.inputManager = new InputManager();
-    this.player = new Player(this.scene, this.inputManager);
+    this.player = new Player(this.inputManager);
     this.world = new World(this.scene);
 
     // Add lighting

@@ -5,7 +5,6 @@ export class Player {
   public camera: THREE.PerspectiveCamera;
   private velocity: THREE.Vector3;
   private direction: THREE.Vector3;
-  private scene: THREE.Scene;
   private inputManager: InputManager;
 
   // Player stats
@@ -22,8 +21,7 @@ export class Player {
   private euler: THREE.Euler;
   private isLocked: boolean = false;
 
-  constructor(scene: THREE.Scene, inputManager: InputManager) {
-    this.scene = scene;
+  constructor(inputManager: InputManager) {
     this.inputManager = inputManager;
 
     // Initialize camera
