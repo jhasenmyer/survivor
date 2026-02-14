@@ -98,6 +98,13 @@ export class InputManager {
   }
 
   /**
+   * Check help toggle (H)
+   */
+  public isHelpToggled(): boolean {
+    return this.isKeyJustPressed('KeyH');
+  }
+
+  /**
    * Check hotbar slot selection (1-5)
    */
   public getHotbarSlotPressed(): number | null {

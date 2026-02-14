@@ -29,6 +29,7 @@ export class Game {
 
   // UI state
   private inventoryOpen: boolean = false;
+  private helpOpen: boolean = false;
   private hasLoggedFirstFrame: boolean = false;
 
   // Lights (needed for TimeSystem)
@@ -245,6 +246,22 @@ export class Game {
   }
 
   /**
+   * Toggle help UI
+   */
+  private toggleHelp(): void {
+    this.helpOpen = !this.helpOpen;
+    const helpScreen = document.getElementById('help-screen');
+    if (helpScreen) {
+      helpScreen.style.display = this.helpOpen ? 'flex' : 'none';
+    }
+
+    // Unlock pointer when help is open
+    if (this.helpOpen) {
+      document.exitPointerLock();
+    }
+  }
+
+  /**
    * Update full inventory UI
    */
   private updateInventoryUI(): void {
@@ -288,6 +305,12 @@ export class Game {
   public checkSaveAndShowMenu(): void {
     const mainMenu = document.getElementById('main-menu');
     const loadingScreen = document.getElementById('loading-screen');
+
+    // Hide gameplay UI elements
+    this.hideGameplayUI();
+
+    // Release pointer lock
+    document.exitPointerLock();
 
     if (this.saveSystem.hasSave()) {
       // Show main menu with continue option
@@ -336,6 +359,9 @@ export class Game {
 
   public async start(): Promise<void> {
     console.log('start() called');
+
+    // Show gameplay UI elements
+    this.showGameplayUI();
 
     // Show loading screen
     const loadingScreen = document.getElementById('loading-screen');
@@ -501,6 +527,17 @@ export class Game {
    * Handle player input
    */
   private handleInput(): void {
+    // Help toggle (H key) - always check so it can open/close anytime
+    if (this.inputManager.isHelpToggled()) {
+      this.toggleHelp();
+      return; // Don't process other inputs when toggling
+    }
+
+    // Skip other inputs if help is open
+    if (this.helpOpen) {
+      return;
+    }
+
     // Inventory toggle (Tab key) - always check so it can close too
     if (this.inputManager.isInventoryToggled()) {
       this.toggleInventory();
@@ -560,6 +597,32 @@ export class Game {
       console.log('Pause menu - not yet implemented');
       // TODO: Show pause menu
     }
+  }
+
+  /**
+   * Hide gameplay UI elements (for main menu)
+   */
+  private hideGameplayUI(): void {
+    const hud = document.getElementById('hud');
+    const hotbar = document.getElementById('hotbar');
+    const crosshair = document.getElementById('crosshair');
+
+    if (hud) hud.style.display = 'none';
+    if (hotbar) hotbar.style.display = 'none';
+    if (crosshair) crosshair.style.display = 'none';
+  }
+
+  /**
+   * Show gameplay UI elements (when game starts)
+   */
+  private showGameplayUI(): void {
+    const hud = document.getElementById('hud');
+    const hotbar = document.getElementById('hotbar');
+    const crosshair = document.getElementById('crosshair');
+
+    if (hud) hud.style.display = 'block';
+    if (hotbar) hotbar.style.display = 'flex';
+    if (crosshair) crosshair.style.display = 'block';
   }
 
   public onWindowResize(): void {

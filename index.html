@@ -225,6 +225,67 @@
       background: rgba(255, 255, 255, 0.2);
       transform: scale(1.05);
     }
+    /* Help/Controls Screen */
+    #help-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      z-index: 1000;
+    }
+    #help-content {
+      background: rgba(20, 20, 20, 0.95);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      padding: 30px 40px;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    #help-content h2 {
+      color: #4a9eff;
+      margin: 0 0 20px 0;
+      font-size: 32px;
+      text-align: center;
+    }
+    #help-content h3 {
+      color: #fff;
+      margin: 20px 0 10px 0;
+      font-size: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      padding-bottom: 5px;
+    }
+    .help-section {
+      margin-bottom: 20px;
+    }
+    .help-key {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      color: #ccc;
+      font-size: 16px;
+    }
+    .help-key-name {
+      font-weight: bold;
+      color: #4a9eff;
+      min-width: 120px;
+    }
+    .help-key-description {
+      color: #ddd;
+    }
+    #help-close-hint {
+      text-align: center;
+      margin-top: 20px;
+      color: #888;
+      font-size: 14px;
+    }
     /* Loading Screen */
     #loading-screen {
       position: absolute;
@@ -377,6 +438,83 @@
   <div id="death-screen" style="display: none;">
     <div id="death-message">YOU DIED</div>
     <button id="respawn-button">Respawn</button>
+  </div>
+
+  <!-- Help/Controls Screen -->
+  <div id="help-screen" style="display: none;">
+    <div id="help-content">
+      <h2>🎮 Controls</h2>
+
+      <div class="help-section">
+        <h3>Movement</h3>
+        <div class="help-key">
+          <span class="help-key-name">W / Arrow Up</span>
+          <span class="help-key-description">Move Forward</span>
+        </div>
+        <div class="help-key">
+          <span class="help-key-name">S / Arrow Down</span>
+          <span class="help-key-description">Move Backward</span>
+        </div>
+        <div class="help-key">
+          <span class="help-key-name">A / Arrow Left</span>
+          <span class="help-key-description">Move Left</span>
+        </div>
+        <div class="help-key">
+          <span class="help-key-name">D / Arrow Right</span>
+          <span class="help-key-description">Move Right</span>
+        </div>
+        <div class="help-key">
+          <span class="help-key-name">Mouse</span>
+          <span class="help-key-description">Look Around</span>
+        </div>
+        <div class="help-key">
+          <span class="help-key-name">Space</span>
+          <span class="help-key-description">Jump</span>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Actions</h3>
+        <div class="help-key">
+          <span class="help-key-name">E</span>
+          <span class="help-key-description">Interact / Place Structure</span>
+        </div>
+        <div class="help-key">
+          <span class="help-key-name">Tab</span>
+          <span class="help-key-description">Open/Close Inventory</span>
+        </div>
+        <div class="help-key">
+          <span class="help-key-name">1 - 5</span>
+          <span class="help-key-description">Select Hotbar Slot</span>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Building</h3>
+        <div class="help-key">
+          <span class="help-key-name">B</span>
+          <span class="help-key-description">Toggle Build Mode</span>
+        </div>
+        <div class="help-key">
+          <span class="help-key-name">R</span>
+          <span class="help-key-description">Cycle Structures (in build mode)</span>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>System</h3>
+        <div class="help-key">
+          <span class="help-key-name">P</span>
+          <span class="help-key-description">Save Game</span>
+        </div>
+        <div class="help-key">
+          <span class="help-key-name">H</span>
+          <span class="help-key-description">Toggle This Help Screen</span>
+        </div>
+      </div>
+
+      <div id="help-close-hint">Press H to close</div>
+    </div>
   </div>
 
   <!-- Loading Screen -->

@@ -52,7 +52,23 @@ export class Player {
   private setupPointerLock(): void {
     document.addEventListener('click', () => {
       if (!this.isLocked) {
-        document.body.requestPointerLock();
+        // Don't lock pointer if any menu is open
+        const mainMenu = document.getElementById('main-menu');
+        const inventoryUI = document.getElementById('inventory-ui');
+        const deathScreen = document.getElementById('death-screen');
+        const loadingScreen = document.getElementById('loading-screen');
+        const helpScreen = document.getElementById('help-screen');
+
+        const isAnyMenuOpen =
+          (mainMenu && mainMenu.style.display !== 'none') ||
+          (inventoryUI && inventoryUI.style.display !== 'none') ||
+          (deathScreen && deathScreen.style.display !== 'none') ||
+          (loadingScreen && loadingScreen.style.display !== 'none') ||
+          (helpScreen && helpScreen.style.display !== 'none');
+
+        if (!isAnyMenuOpen) {
+          document.body.requestPointerLock();
+        }
       }
     });
 
