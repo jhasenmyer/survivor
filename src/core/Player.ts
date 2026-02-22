@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { InputManager } from './InputManager';
 import { Inventory } from '../systems/InventorySystem';
 import { ItemDefinition } from '../types/Item';
+import { exitPointerLock, requestPointerLock } from './pointerLock';
 
 export class Player {
   public camera: THREE.PerspectiveCamera;
@@ -77,7 +78,7 @@ export class Player {
           (mapPanel && mapPanel.style.display !== 'none');
 
         if (!isAnyMenuOpen) {
-          document.body.requestPointerLock();
+          requestPointerLock(document.body);
         }
       }
     });
@@ -102,16 +103,21 @@ export class Player {
     getTerrainHeight?: (x: number, z: number) => number,
     checkStructureCollision?: (x: number, z: number, radius: number) => boolean
   ): void {
-    if (!this.isLocked) return;
+    if (!this.isGameplayActive()) return;
 
-    // Get input direction
-    this.direction.set(0, 0, 0);
+    // Apply touch look delta (mouse look is handled in mousemove when pointer locked)
+    const look = this.inputManager.consumeLookDelta();
+    if (look.dx !== 0 || look.dy !== 0) {
+      this.euler.setFromQuaternion(this.camera.quaternion);
+      this.euler.y -= look.dx * this.MOUSE_SENSITIVITY;
+      this.euler.x -= look.dy * this.MOUSE_SENSITIVITY;
+      this.euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.euler.x));
+      this.camera.quaternion.setFromEuler(this.euler);
+    }
 
-    if (this.inputManager.isKeyPressed('KeyW') || this.inputManager.isKeyPressed('ArrowUp')) this.direction.z -= 1;
-    if (this.inputManager.isKeyPressed('KeyS') || this.inputManager.isKeyPressed('ArrowDown')) this.direction.z += 1;
-    if (this.inputManager.isKeyPressed('KeyA') || this.inputManager.isKeyPressed('ArrowLeft')) this.direction.x -= 1;
-    if (this.inputManager.isKeyPressed('KeyD') || this.inputManager.isKeyPressed('ArrowRight')) this.direction.x += 1;
-
+    // Get input direction (keyboard or touch joystick)
+    const move = this.inputManager.getMoveDirection();
+    this.direction.set(move.x, 0, move.z);
     this.direction.normalize();
 
     // Apply movement relative to camera direction
@@ -173,8 +179,8 @@ export class Player {
       // On ground - stop falling
       this.velocity.y = Math.max(0, this.velocity.y);
 
-      // Jump
-      if (this.inputManager.isKeyPressed('Space')) {
+      // Jump (keyboard or touch)
+      if (this.inputManager.isJumpJustPressed()) {
         this.velocity.y = this.JUMP_FORCE;
         isOnGround = false;
       }
@@ -248,7 +254,7 @@ export class Player {
       deathScreen.style.display = 'flex';
     }
     // Unlock pointer so player can click respawn button
-    document.exitPointerLock();
+    exitPointerLock();
   }
 
   private updateHUD(): void {
@@ -351,10 +357,17 @@ export class Player {
   }
 
   /**
-   * Check if pointer is locked
+   * Check if pointer is locked (desktop)
    */
   public isPointerLocked(): boolean {
     return this.isLocked;
+  }
+
+  /**
+   * Whether gameplay input is active: pointer locked (desktop) or touch controls active (mobile).
+   */
+  public isGameplayActive(): boolean {
+    return this.isLocked || this.inputManager.isTouchActive();
   }
 
   /**

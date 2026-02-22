@@ -467,6 +467,118 @@
       font-size: 11px;
       color: #888;
     }
+    /* Touch controls (shown only on touch devices) */
+    #touch-controls-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 50;
+    }
+    #touch-controls-overlay > * {
+      pointer-events: auto;
+    }
+    #touch-joystick-zone {
+      position: absolute;
+      left: 0;
+      bottom: 120px;
+      width: 140px;
+      height: 140px;
+      touch-action: none;
+    }
+    #touch-joystick-base {
+      position: absolute;
+      left: 20px;
+      bottom: 0;
+      width: 112px;
+      height: 112px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.4);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #touch-joystick-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.5);
+      pointer-events: none;
+      transition: transform 0.05s ease-out;
+    }
+    #touch-look-pad {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 55%;
+      height: 100%;
+      touch-action: none;
+    }
+    .touch-action-btn {
+      position: absolute;
+      right: 20px;
+      bottom: 120px;
+      min-width: 52px;
+      min-height: 52px;
+      padding: 10px;
+      font-size: 14px;
+      font-weight: bold;
+      color: white;
+      background: rgba(0, 0, 0, 0.5);
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-radius: 8px;
+      touch-action: manipulation;
+    }
+    #touch-btn-interact {
+      right: 20px;
+      bottom: 190px;
+    }
+    #touch-btn-jump {
+      right: 90px;
+      bottom: 120px;
+    }
+    .touch-menu-btn {
+      top: 20px;
+      right: 20px;
+      bottom: auto;
+      min-width: 48px;
+      min-height: 48px;
+      font-size: 22px;
+    }
+    .touch-menu-panel {
+      position: absolute;
+      top: 75px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      padding: 8px;
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 140px;
+      z-index: 60;
+    }
+    .touch-menu-panel.open {
+      display: flex;
+    }
+    .touch-menu-item {
+      padding: 12px 16px;
+      font-size: 16px;
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: left;
+      touch-action: manipulation;
+    }
+    .touch-menu-item:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
     /* Death Screen */
     #death-screen {
       position: absolute;
@@ -696,6 +808,70 @@
       height: 20px;
       cursor: pointer;
     }
+    /* Safe areas for notched devices */
+    #hud {
+      top: max(20px, env(safe-area-inset-top, 0px));
+      left: max(20px, env(safe-area-inset-left, 0px));
+    }
+    #hotbar {
+      bottom: max(20px, env(safe-area-inset-bottom, 0px));
+    }
+    #touch-joystick-zone {
+      bottom: max(120px, calc(100px + env(safe-area-inset-bottom, 0px)));
+    }
+    .touch-action-btn {
+      right: max(20px, env(safe-area-inset-right, 0px));
+    }
+    #touch-btn-jump {
+      right: max(90px, calc(90px + env(safe-area-inset-right, 0px)));
+      bottom: max(120px, calc(100px + env(safe-area-inset-bottom, 0px)));
+    }
+    #touch-btn-interact {
+      right: max(20px, env(safe-area-inset-right, 0px));
+      bottom: max(190px, calc(170px + env(safe-area-inset-bottom, 0px)));
+    }
+    .touch-menu-btn {
+      top: max(20px, env(safe-area-inset-top, 0px));
+      right: max(20px, env(safe-area-inset-right, 0px));
+    }
+    /* Responsive: small screens and touch targets */
+    @media (max-width: 480px) {
+      #inventory-ui {
+        width: min(650px, calc(100vw - 32px));
+        max-height: 85vh;
+        overflow-y: auto;
+      }
+      #crafting-ui {
+        width: min(700px, calc(100vw - 32px));
+        max-height: 85vh;
+      }
+      #map-panel {
+        max-width: calc(100vw - 32px);
+      }
+      #map-canvas {
+        max-width: 100%;
+        height: auto;
+      }
+      .hotbar-slot {
+        min-width: 44px;
+        min-height: 44px;
+        width: 52px;
+        height: 52px;
+        font-size: 9px;
+      }
+      .hotbar-slot-icon {
+        font-size: 24px;
+      }
+      .inventory-slot {
+        min-width: 44px;
+        min-height: 44px;
+        width: 80px;
+        height: 80px;
+      }
+      .menu-button {
+        min-height: 48px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -917,7 +1093,12 @@
         </div>
       </div>
 
-      <div id="help-close-hint">Press H to close</div>
+      <div class="help-section" id="help-touch-section">
+        <h3>Touch / Mobile</h3>
+        <p class="help-tip">On tablets and phones you get on-screen controls: left joystick to move, drag on the right side to look, Jump and E (Interact) buttons, and a Menu (☰) for Inventory, Crafting, Build, Help, Pause, Save, Map, Rotate, Cycle, and Destroy. Tap hotbar slots to select. In inventory, long-press an item to use it (e.g. eat, drink).</p>
+      </div>
+
+      <div id="help-close-hint">Press H to close (or tap Menu then Help on touch)</div>
     </div>
   </div>
 

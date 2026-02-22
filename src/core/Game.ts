@@ -13,7 +13,9 @@ import { ITEMS, getItem } from '../types/Item';
 import type { Structure } from '../entities/Structure';
 import { Structure as StructureEntity } from '../entities/Structure';
 import { renderMap } from '../ui/MapOverlay';
+import { TouchControls } from '../ui/TouchControls';
 import { getPerformanceMode, setPerformanceMode as persistPerformanceMode } from './GameSettings';
+import { exitPointerLock } from './pointerLock';
 
 export class Game {
   private scene: THREE.Scene;
@@ -32,6 +34,7 @@ export class Game {
   private saveSystem: SaveSystem;
   private buildingSystem: BuildingSystem;
   private craftingSystem: CraftingSystem;
+  private touchControls: TouchControls;
 
   // Settings (performance mode affects renderer and shadows)
   private performanceMode: boolean;
@@ -146,6 +149,9 @@ export class Game {
     console.log('Creating CraftingSystem');
     this.craftingSystem = new CraftingSystem(this.player);
     console.log('CraftingSystem created');
+
+    // Touch controls (mount when game starts if touch device)
+    this.touchControls = new TouchControls(this.inputManager);
 
     // Setup UI handlers
     this.setupUIHandlers();
@@ -313,6 +319,18 @@ export class Game {
         this.setPerformanceMode(performanceToggle.checked);
       });
     }
+
+    // Hotbar slot tap/click: set selected slot (touch and desktop click)
+    document.querySelectorAll('.hotbar-slot[data-slot]').forEach((el) => {
+      const slotIndex = parseInt((el as HTMLElement).dataset.slot ?? '0', 10);
+      el.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        this.inputManager.setTouchHotbarSlot(slotIndex);
+      }, { passive: false });
+      el.addEventListener('click', (e: Event) => {
+        if ((e as MouseEvent).button === 0) this.inputManager.setTouchHotbarSlot(slotIndex);
+      });
+    });
   }
 
   private openSettingsFrom(from: 'pause' | 'main'): void {
@@ -345,7 +363,7 @@ export class Game {
 
   private openPauseMenu(): void {
     this.pauseMenuOpen = true;
-    document.exitPointerLock();
+    exitPointerLock();
     this.pause();
     const pauseMenu = document.getElementById('pause-menu');
     if (pauseMenu) pauseMenu.style.display = 'block';
@@ -442,7 +460,7 @@ export class Game {
 
     // Unlock pointer when inventory is open
     if (this.inventoryOpen) {
-      document.exitPointerLock();
+      exitPointerLock();
     }
   }
 
@@ -458,7 +476,7 @@ export class Game {
 
     // Unlock pointer when help is open
     if (this.helpOpen) {
-      document.exitPointerLock();
+      exitPointerLock();
     }
   }
 
@@ -584,6 +602,35 @@ export class Game {
         }
       });
 
+      // Long-press on touch: use item (same as right-click)
+      const LONG_PRESS_MS = 500;
+      let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+      slotElement.addEventListener('touchstart', () => {
+        if (!slot.item?.useAction) return;
+        longPressTimer = setTimeout(() => {
+          longPressTimer = null;
+          const slots = this.player.inventory.getAllSlots();
+          const current = slots[index];
+          if (current?.item?.useAction) {
+            current.item.useAction(this.player);
+            this.updateInventoryUI();
+            this.updateHotbarUI();
+          }
+        }, LONG_PRESS_MS);
+      }, { passive: true });
+      slotElement.addEventListener('touchend', () => {
+        if (longPressTimer) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
+        }
+      }, { passive: true });
+      slotElement.addEventListener('touchcancel', () => {
+        if (longPressTimer) {
+          clearTimeout(longPressTimer);
+          longPressTimer = null;
+        }
+      }, { passive: true });
+
       inventoryGrid.appendChild(slotElement);
     });
   }
@@ -598,8 +645,8 @@ export class Game {
     // Hide gameplay UI elements
     this.hideGameplayUI();
 
-    // Release pointer lock
-    document.exitPointerLock();
+    // Release pointer lock (no-op on iOS Safari)
+    exitPointerLock();
 
     if (this.saveSystem.hasSave()) {
       // Show main menu with continue option
@@ -648,66 +695,81 @@ export class Game {
   }
 
   public async start(): Promise<void> {
-    console.log('start() called');
-
-    // Show gameplay UI elements
-    this.showGameplayUI();
-
-    // Show loading screen
     const loadingScreen = document.getElementById('loading-screen');
     const loadingProgress = document.getElementById('loading-progress');
     const loadingText = document.getElementById('loading-text');
 
-    // Load audio assets
-    if (loadingText) loadingText.textContent = 'Loading audio...';
-
-    const audioFiles = [
-      { path: '/sounds/forest_ambient.mp3', name: 'forest_ambient' },
-      { path: '/sounds/footstep_grass.mp3', name: 'footstep_grass' },
-      { path: '/sounds/tree_chop.mp3', name: 'tree_chop' },
-      { path: '/sounds/item_pickup.mp3', name: 'item_pickup' },
-    ];
-
-    console.log('Loading audio files...');
     try {
-      await this.assetManager.loadAudioBatch(audioFiles, (progress) => {
-        if (loadingProgress) {
-          loadingProgress.style.width = `${progress.percentage}%`;
-        }
-        if (loadingText) {
-          loadingText.textContent = `Loading ${progress.currentFile}...`;
-        }
+      console.log('start() called');
+
+      // Show gameplay UI elements
+      this.showGameplayUI();
+
+      // Mount touch controls on touch devices
+      if (this.touchControls.shouldShow()) {
+        const overlay = document.getElementById('ui-overlay');
+        if (overlay) this.touchControls.mount(overlay);
+      }
+
+      // Load audio assets
+      if (loadingText) loadingText.textContent = 'Loading audio...';
+
+      const audioFiles = [
+        { path: '/sounds/forest_ambient.mp3', name: 'forest_ambient' },
+        { path: '/sounds/footstep_grass.mp3', name: 'footstep_grass' },
+        { path: '/sounds/tree_chop.mp3', name: 'tree_chop' },
+        { path: '/sounds/item_pickup.mp3', name: 'item_pickup' },
+      ];
+
+      console.log('Loading audio files...');
+      try {
+        await this.assetManager.loadAudioBatch(audioFiles, (progress) => {
+          if (loadingProgress) {
+            loadingProgress.style.width = `${progress.percentage}%`;
+          }
+          if (loadingText) {
+            loadingText.textContent = `Loading ${progress.currentFile}...`;
+          }
+        });
+        console.log('Audio files loaded');
+      } catch (error) {
+        console.warn('Some audio files failed to load, continuing anyway...', error);
+      }
+
+      // Hide loading screen
+      console.log('Hiding loading screen');
+      if (loadingScreen) {
+        loadingScreen.style.display = 'none';
+      }
+
+      // Resume audio context on first user interaction (don't await - will happen when user clicks)
+      console.log('Attempting to resume audio context');
+      this.audioSystem.resume().then(() => {
+        console.log('Audio context resumed');
+        // Start ambient forest sound after audio is allowed
+        this.audioSystem.playAmbient('forest_ambient', 0.3);
+      }).catch(err => {
+        console.log('Audio context resume failed (expected until user interaction):', err);
       });
-      console.log('Audio files loaded');
-    } catch (error) {
-      console.warn('Some audio files failed to load, continuing anyway...', error);
+
+      // Start game loop immediately (don't wait for audio)
+      console.log('Starting game loop');
+      this.isRunning = true;
+      this.animate();
+      console.log('Game loop started');
+
+      // Start auto-save
+      this.saveSystem.startAutoSave();
+      console.log('Auto-save enabled (every 60 seconds)');
+    } catch (err) {
+      console.error('Game start failed:', err);
+      if (loadingScreen && loadingText) {
+        loadingScreen.style.display = 'flex';
+        loadingText.textContent = 'Failed to start. Check the console for details.';
+        const errMsg = err instanceof Error ? err.message : String(err);
+        loadingText.title = errMsg;
+      }
     }
-
-    // Hide loading screen
-    console.log('Hiding loading screen');
-    if (loadingScreen) {
-      loadingScreen.style.display = 'none';
-    }
-
-    // Resume audio context on first user interaction (don't await - will happen when user clicks)
-    console.log('Attempting to resume audio context');
-    this.audioSystem.resume().then(() => {
-      console.log('Audio context resumed');
-      // Start ambient forest sound after audio is allowed
-      this.audioSystem.playAmbient('forest_ambient', 0.3);
-    }).catch(err => {
-      console.log('Audio context resume failed (expected until user interaction):', err);
-    });
-
-    // Start game loop immediately (don't wait for audio)
-    console.log('Starting game loop');
-    this.isRunning = true;
-    this.animate();
-    console.log('Game loop started');
-
-    // Start auto-save
-    this.saveSystem.startAutoSave();
-    console.log('Auto-save enabled (every 60 seconds)');
   }
 
   public pause(): void {
@@ -820,6 +882,9 @@ export class Game {
         });
       }
     }
+
+    // Clear touch just-pressed so it is only consumed once per frame
+    this.inputManager.clearTouchJustPressed();
 
     // Render
     this.renderer.render(this.scene, this.player.camera);

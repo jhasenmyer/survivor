@@ -3,6 +3,7 @@
  */
 
 import type { Player } from '../core/Player';
+import { exitPointerLock } from '../core/pointerLock';
 import { RECIPES, CraftingRecipe, getRecipesByCategory } from '../types/CraftingRecipe';
 import { ITEMS } from '../types/Item';
 
@@ -32,8 +33,8 @@ export class CraftingSystem {
       this.updateCraftingUI();
     }
 
-    // Unlock pointer when menu is open
-    document.exitPointerLock();
+    // Unlock pointer when menu is open (no-op on iOS Safari)
+    exitPointerLock();
   }
 
   /**

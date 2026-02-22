@@ -35,8 +35,8 @@ export class InteractionSystem {
    * Update interaction system (check for interactable targets)
    */
   public update(): void {
-    // Don't check for interactions if pointer not locked
-    if (!this.player.isPointerLocked()) {
+    // Don't check for interactions if gameplay not active (pointer lock or touch)
+    if (!this.player.isGameplayActive()) {
       this.hideInteractionPrompt();
       this.currentTarget = null;
       return;
@@ -69,7 +69,7 @@ export class InteractionSystem {
    * Attempt to interact with current target
    */
   public interact(): void {
-    if (this.currentTarget && this.player.isPointerLocked()) {
+    if (this.currentTarget && this.player.isGameplayActive()) {
       const target = this.currentTarget;
       target.onInteract(this.player);
       // When interacting with a Structure (campfire, tent, shelter), notify so game can set home
