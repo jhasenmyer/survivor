@@ -137,11 +137,11 @@ export class Game {
 
   private setupLighting(): void {
     // Ambient light
-    this.ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+    this.ambientLight = new THREE.AmbientLight(0x505060, 0.7);
     this.scene.add(this.ambientLight);
 
     // Directional light (sun)
-    this.directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    this.directionalLight = new THREE.DirectionalLight(0xffffff, 1.3);
     this.directionalLight.position.set(50, 100, 50);
     this.directionalLight.castShadow = true;
     this.directionalLight.shadow.camera.left = -100;

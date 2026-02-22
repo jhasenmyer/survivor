@@ -24,31 +24,31 @@ export class TimeSystem {
   private readonly timeColors = {
     dawn: {
       sun: new THREE.Color(0xffa500), // Orange
-      ambient: new THREE.Color(0x4a4a6a), // Dark blue-gray
+      ambient: new THREE.Color(0x5a5a7a), // Lighter blue-gray
       fog: new THREE.Color(0xffa500),
-      sunIntensity: 0.6,
-      ambientIntensity: 0.3,
+      sunIntensity: 0.8,
+      ambientIntensity: 0.45,
     },
     day: {
       sun: new THREE.Color(0xffffff), // White
-      ambient: new THREE.Color(0x8888aa), // Light blue-gray
-      fog: new THREE.Color(0xccddff),
-      sunIntensity: 1.0,
-      ambientIntensity: 0.5,
+      ambient: new THREE.Color(0xaaaacc), // Brighter blue-gray
+      fog: new THREE.Color(0xddeeff),
+      sunIntensity: 1.3,
+      ambientIntensity: 0.7,
     },
     dusk: {
       sun: new THREE.Color(0xff6600), // Deep orange
-      ambient: new THREE.Color(0x3a3a5a), // Darker blue-gray
+      ambient: new THREE.Color(0x4a4a6a), // Lighter blue-gray
       fog: new THREE.Color(0xff8844),
-      sunIntensity: 0.5,
-      ambientIntensity: 0.25,
+      sunIntensity: 0.65,
+      ambientIntensity: 0.4,
     },
     night: {
-      sun: new THREE.Color(0x4466aa), // Blue moonlight
-      ambient: new THREE.Color(0x1a1a2a), // Very dark blue
-      fog: new THREE.Color(0x1a1a3a),
-      sunIntensity: 0.2,
-      ambientIntensity: 0.1,
+      sun: new THREE.Color(0x6688cc), // Brighter blue moonlight
+      ambient: new THREE.Color(0x2a2a4a), // Lighter dark blue
+      fog: new THREE.Color(0x2a2a4a),
+      sunIntensity: 0.35,
+      ambientIntensity: 0.2,
     },
   };
 

@@ -82,16 +82,16 @@ export class Structure extends Entity {
     // Fire (orange cone)
     const fireGeometry = new THREE.ConeGeometry(0.3, 0.8, 4);
     const fireMaterial = new THREE.MeshBasicMaterial({
-      color: 0xff6600,
+      color: 0xff8833,
       transparent: true,
-      opacity: 0.8,
+      opacity: 0.9,
     });
     const fire = new THREE.Mesh(fireGeometry, fireMaterial);
     fire.position.y = 0.6;
     group.add(fire);
 
     // Proximity light (illuminates area after dark)
-    const pointLight = new THREE.PointLight(0xff8844, 1.2, 10, 2);
+    const pointLight = new THREE.PointLight(0xffaa55, 1.8, 12, 2);
     pointLight.position.set(0, 0.6, 0);
     group.add(pointLight);
   }
