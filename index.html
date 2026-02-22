@@ -379,6 +379,26 @@
       font-size: 16px;
       text-align: center;
     }
+    /* Home compass (direction + distance to campfire/tent) */
+    #home-compass {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+      font-size: 16px;
+      pointer-events: none;
+      z-index: 100;
+    }
+    #home-compass-arrow {
+      display: inline-block;
+      font-size: 20px;
+      transition: transform 0.1s ease-out;
+    }
     /* Build Mode UI */
     #build-mode-ui {
       position: absolute;
@@ -503,6 +523,12 @@
     .help-key-description {
       color: #ddd;
     }
+    .help-tip {
+      color: #ccc;
+      font-size: 14px;
+      margin: 8px 0 0;
+      line-height: 1.4;
+    }
     #help-close-hint {
       text-align: center;
       margin-top: 20px;
@@ -602,6 +628,11 @@
       <div id="health">Health: 100</div>
       <div id="hunger">Hunger: 100</div>
       <div id="thirst">Thirst: 100</div>
+    </div>
+    <!-- Home compass: direction + distance (shown when home is set) -->
+    <div id="home-compass" style="display: none;">
+      <span id="home-compass-arrow" aria-hidden="true">▲</span>
+      <span id="home-compass-text">⌂ Home — m</span>
     </div>
     <div id="notification-area"></div>
     <div id="crosshair"></div>
@@ -767,6 +798,11 @@
           <span class="help-key-name">R</span>
           <span class="help-key-description">Cycle Structures (in build mode)</span>
         </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Home / Navigation</h3>
+        <p class="help-tip">Interact (E) with a campfire, tent, or shelter to set it as home. A compass at the top of the screen will show direction and distance back to home.</p>
       </div>
 
       <div class="help-section">

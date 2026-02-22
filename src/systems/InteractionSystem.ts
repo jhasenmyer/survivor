@@ -15,6 +15,9 @@ export class InteractionSystem {
   private currentTarget: Entity | null = null;
   private maxInteractionDistance: number = 5;
 
+  /** Called when player interacts with a Structure (campfire, tent, shelter) - e.g. to set home */
+  public onStructureInteract?: (entity: Entity) => void;
+
   // UI elements
   private interactionPrompt: HTMLElement | null;
 
@@ -67,7 +70,12 @@ export class InteractionSystem {
    */
   public interact(): void {
     if (this.currentTarget && this.player.isPointerLocked()) {
-      this.currentTarget.onInteract(this.player);
+      const target = this.currentTarget;
+      target.onInteract(this.player);
+      // When interacting with a Structure (campfire, tent, shelter), notify so game can set home
+      if (target.constructor.name === 'Structure' && this.onStructureInteract) {
+        this.onStructureInteract(target);
+      }
       // Update immediately in case target was destroyed
       this.update();
     }

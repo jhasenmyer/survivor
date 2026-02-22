@@ -105,6 +105,10 @@ export class Game {
       this.player,
       this.world.entityManager
     );
+    this.interactionSystem.onStructureInteract = (entity) => {
+      this.player.setHomePosition(entity.position.clone());
+      this.showNotification('Home set! Use the compass to find your way back.', 'success');
+    };
     console.log('InteractionSystem created');
 
     // Initialize save system
@@ -569,6 +573,9 @@ export class Game {
       this.interactionSystem.update();
     }
 
+    // Update home compass (direction + distance)
+    this.updateHomeCompass();
+
     // Update building system ghost placement
     this.buildingSystem.updateGhostPlacement(this.player.camera);
 
@@ -706,16 +713,54 @@ export class Game {
   }
 
   /**
+   * Update home compass: show direction arrow and distance when home is set
+   */
+  private updateHomeCompass(): void {
+    const compassEl = document.getElementById('home-compass');
+    const arrowEl = document.getElementById('home-compass-arrow');
+    const textEl = document.getElementById('home-compass-text');
+    if (!compassEl || !arrowEl || !textEl) return;
+
+    if (!this.player.hasHome()) {
+      compassEl.style.display = 'none';
+      return;
+    }
+
+    compassEl.style.display = 'flex';
+
+    const home = this.player.getHomePosition()!;
+    const pos = this.player.getPosition();
+    const distance = pos.distanceTo(home);
+    textEl.textContent = `⌂ Home ${Math.round(distance)}m`;
+
+    // Point arrow toward home (XZ plane only)
+    const forward = this.player.getDirection();
+    forward.y = 0;
+    forward.normalize();
+    const toHome = home.clone().sub(pos);
+    toHome.y = 0;
+    toHome.normalize();
+    const angleForward = Math.atan2(forward.x, forward.z);
+    const angleToHome = Math.atan2(toHome.x, toHome.z);
+    let deg = ((angleToHome - angleForward) * 180) / Math.PI;
+    if (deg > 180) deg -= 360;
+    if (deg < -180) deg += 360;
+    arrowEl.style.transform = `rotate(${deg}deg)`;
+  }
+
+  /**
    * Hide gameplay UI elements (for main menu)
    */
   private hideGameplayUI(): void {
     const hud = document.getElementById('hud');
     const hotbar = document.getElementById('hotbar');
     const crosshair = document.getElementById('crosshair');
+    const homeCompass = document.getElementById('home-compass');
 
     if (hud) hud.style.display = 'none';
     if (hotbar) hotbar.style.display = 'none';
     if (crosshair) crosshair.style.display = 'none';
+    if (homeCompass) homeCompass.style.display = 'none';
   }
 
   /**
@@ -729,6 +774,7 @@ export class Game {
     if (hud) hud.style.display = 'block';
     if (hotbar) hotbar.style.display = 'flex';
     if (crosshair) crosshair.style.display = 'block';
+    // Home compass visibility is updated each frame in updateHomeCompass()
   }
 
   /**

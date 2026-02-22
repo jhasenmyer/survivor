@@ -25,6 +25,9 @@ export class Player {
   private readonly GRAVITY = 20;
   private readonly JUMP_FORCE = 8;
 
+  // Home waypoint (campfire/tent/shelter) for compass
+  private homePosition: THREE.Vector3 | null = null;
+
   private euler: THREE.Euler;
   private isLocked: boolean = false;
 
@@ -346,5 +349,20 @@ export class Player {
    */
   public isPointerLocked(): boolean {
     return this.isLocked;
+  }
+
+  /**
+   * Home waypoint for compass - set when interacting with campfire/tent/shelter
+   */
+  public getHomePosition(): THREE.Vector3 | null {
+    return this.homePosition ? this.homePosition.clone() : null;
+  }
+
+  public setHomePosition(position: THREE.Vector3): void {
+    this.homePosition = position.clone();
+  }
+
+  public hasHome(): boolean {
+    return this.homePosition !== null;
   }
 }

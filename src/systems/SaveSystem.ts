@@ -2,6 +2,7 @@
  * SaveSystem - Handles saving and loading game state to localStorage
  */
 
+import * as THREE from 'three';
 import type { Player } from '../core/Player';
 import type { World } from '../core/World';
 import type { TimeSystem } from './TimeSystem';
@@ -16,6 +17,7 @@ export interface SaveData {
     hunger: number;
     thirst: number;
     inventory: any;
+    homePosition: { x: number; y: number; z: number } | null;
   };
   world: {
     timeOfDay: number;
@@ -55,6 +57,13 @@ export class SaveSystem {
           hunger: this.player.getHunger(),
           thirst: this.player.getThirst(),
           inventory: this.player.inventory.serialize(),
+          homePosition: this.player.hasHome()
+            ? {
+                x: this.player.getHomePosition()!.x,
+                y: this.player.getHomePosition()!.y,
+                z: this.player.getHomePosition()!.z,
+              }
+            : null,
         },
         world: {
           timeOfDay: this.timeSystem.getCurrentTime(),
@@ -106,6 +115,17 @@ export class SaveSystem {
 
       // Restore inventory
       this.player.inventory.deserialize(saveData.player.inventory, getItem);
+
+      // Restore home waypoint (optional for older saves)
+      if (saveData.player.homePosition != null) {
+        this.player.setHomePosition(
+          new THREE.Vector3(
+            saveData.player.homePosition.x,
+            saveData.player.homePosition.y,
+            saveData.player.homePosition.z
+          )
+        );
+      }
 
       // Restore time of day
       this.timeSystem.setCurrentTime(saveData.world.timeOfDay);
