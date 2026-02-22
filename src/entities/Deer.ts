@@ -5,6 +5,8 @@
 
 import * as THREE from 'three';
 import { Animal, AnimalOptions } from './Animal';
+import { ItemEntity } from './ItemEntity';
+import { ITEMS } from '../types/Item';
 
 export class Deer extends Animal {
   constructor(position: THREE.Vector3) {
@@ -15,14 +17,40 @@ export class Deer extends Animal {
       fleeDistance: 8, // Reduced from 12
       fleeSpeed: 7, // Reduced from 12 - slower than player
       safeDistance: 20, // Reduced from 25
-      lootTable: [
-        { itemId: 'raw_meat', quantity: 3, chance: 1.0 }, // Always drops 3 meat
-        { itemId: 'raw_meat', quantity: 2, chance: 0.5 }, // 50% chance for 2 more
-      ],
+      lootTable: [], // Deer uses override dropLoot() for meat + leather
     };
 
     super(options);
     this.createMesh();
+  }
+
+  /**
+   * Drop randomized meat and leather (at most 5 total; minimum of either can be zero).
+   */
+  protected override dropLoot(): void {
+    if (!this.world?.entityManager) return;
+
+    const total = Math.floor(Math.random() * 6); // 0..5 inclusive
+    const meat = total === 0 ? 0 : Math.floor(Math.random() * (total + 1)); // 0..total
+    const leather = total - meat;
+
+    const dropPosition = this.position.clone();
+    dropPosition.y += 0.5;
+
+    if (meat > 0) {
+      const pos = dropPosition.clone();
+      pos.x += (Math.random() - 0.5) * 0.5;
+      pos.z += (Math.random() - 0.5) * 0.5;
+      const itemEntity = new ItemEntity(ITEMS['raw_meat'], pos, meat);
+      this.world.entityManager.addEntity(itemEntity);
+    }
+    if (leather > 0) {
+      const pos = dropPosition.clone();
+      pos.x += (Math.random() - 0.5) * 0.5;
+      pos.z += (Math.random() - 0.5) * 0.5;
+      const itemEntity = new ItemEntity(ITEMS['leather'], pos, leather);
+      this.world.entityManager.addEntity(itemEntity);
+    }
   }
 
   /**

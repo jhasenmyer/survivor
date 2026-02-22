@@ -62,6 +62,24 @@ export const RECIPES: Record<string, BuildingRecipe> = {
     },
   },
 
+  tent: {
+    id: 'tent',
+    name: 'Tent',
+    description: 'A portable shelter. Requires 5 leather and 10 sticks.',
+    requirements: [
+      { itemId: 'leather', quantity: 5 },
+      { itemId: 'stick', quantity: 10 },
+    ],
+    width: 2,
+    depth: 2,
+    interactable: true,
+    interactionText: 'Press E to rest (restores health)',
+    onInteract: (player) => {
+      player.heal(50);
+      console.log('Rested at tent, restored 50 health!');
+    },
+  },
+
   // Abandoned structure (for spawning, not buildable)
   abandoned_shack: {
     id: 'abandoned_shack',

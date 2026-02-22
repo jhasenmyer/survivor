@@ -165,6 +165,15 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Raw iron ore. Can be smelted into iron.',
   },
 
+  leather: {
+    id: 'leather',
+    name: 'Leather',
+    icon: '🦌',
+    type: ItemType.RESOURCE,
+    maxStack: 50,
+    description: 'Animal hide. Used for crafting.',
+  },
+
   // Food
   raw_meat: {
     id: 'raw_meat',

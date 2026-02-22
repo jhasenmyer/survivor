@@ -37,6 +37,9 @@ export class Structure extends Entity {
       case 'lean_to':
         this.createLeanToMesh(group);
         break;
+      case 'tent':
+        this.createTentMesh(group);
+        break;
       case 'abandoned_shack':
         this.createAbandonedShackMesh(group);
         break;
@@ -129,6 +132,34 @@ export class Structure extends Entity {
     wall.castShadow = true;
     wall.receiveShadow = true;
     group.add(wall);
+  }
+
+  /**
+   * Create tent mesh (A-frame with cloth)
+   */
+  private createTentMesh(group: THREE.Group): void {
+    const poleGeometry = new THREE.CylinderGeometry(0.04, 0.05, 1.2, 6);
+    const poleMaterial = new THREE.MeshPhongMaterial({ color: 0x4a2511 });
+
+    const leftPole = new THREE.Mesh(poleGeometry, poleMaterial);
+    leftPole.position.set(-0.7, 0.6, 0);
+    leftPole.castShadow = true;
+    group.add(leftPole);
+
+    const rightPole = new THREE.Mesh(poleGeometry, poleMaterial);
+    rightPole.position.set(0.7, 0.6, 0);
+    rightPole.castShadow = true;
+    group.add(rightPole);
+
+    // Tent canopy (triangular cone on its side as A-frame)
+    const clothMaterial = new THREE.MeshPhongMaterial({ color: 0x8b7355 });
+    const canopyGeometry = new THREE.ConeGeometry(0.9, 1.2, 3);
+    const canopy = new THREE.Mesh(canopyGeometry, clothMaterial);
+    canopy.rotation.z = Math.PI / 2;
+    canopy.position.y = 0.6;
+    canopy.castShadow = true;
+    canopy.receiveShadow = true;
+    group.add(canopy);
   }
 
   /**
