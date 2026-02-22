@@ -15,6 +15,7 @@ export class BuildingSystem {
   private isInBuildMode: boolean = false;
   private currentRecipeId: string = 'campfire';
   private ghostMesh: THREE.Mesh | null = null;
+  private ghostRotationY: number = 0;
   private placementValid: boolean = false;
   private placementPosition: THREE.Vector3 = new THREE.Vector3();
 
@@ -66,6 +67,7 @@ export class BuildingSystem {
 
     this.ghostMesh = new THREE.Mesh(geometry, material);
     this.ghostMesh.position.y = 0.5;
+    this.ghostMesh.rotation.y = this.ghostRotationY;
     this.scene.add(this.ghostMesh);
   }
 
@@ -107,9 +109,10 @@ export class BuildingSystem {
     );
     this.placementPosition.y = terrainHeight;
 
-    // Update ghost mesh position
+    // Update ghost mesh position and rotation
     this.ghostMesh.position.copy(this.placementPosition);
     this.ghostMesh.position.y = terrainHeight + 0.5;
+    this.ghostMesh.rotation.y = this.ghostRotationY;
 
     // Check if placement is valid
     this.placementValid = this.checkPlacementValid(recipe);
@@ -164,8 +167,8 @@ export class BuildingSystem {
       this.player.removeItemById(req.itemId, req.quantity);
     }
 
-    // Create structure entity
-    const structure = new Structure(recipe, this.placementPosition.clone());
+    // Create structure entity with current ghost rotation
+    const structure = new Structure(recipe, this.placementPosition.clone(), this.ghostRotationY);
     this.world.entityManager.addEntity(structure);
 
     console.log(`Placed ${recipe.name}!`);
@@ -198,6 +201,16 @@ export class BuildingSystem {
 
     // Update UI
     this.updateBuildUI();
+  }
+
+  /**
+   * Rotate ghost preview by 90 degrees (Q key in build mode)
+   */
+  public rotateGhost(): void {
+    this.ghostRotationY += Math.PI / 2;
+    if (this.ghostMesh) {
+      this.ghostMesh.rotation.y = this.ghostRotationY;
+    }
   }
 
   /**

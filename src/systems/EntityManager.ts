@@ -5,6 +5,8 @@
 
 import * as THREE from 'three';
 import { Entity } from '../entities/Entity';
+import { Structure } from '../entities/Structure';
+import { RECIPES } from '../types/BuildingRecipe';
 import type { World } from '../core/World';
 
 export class EntityManager {
@@ -234,18 +236,33 @@ export class EntityManager {
   /**
    * Serialize all entities for saving
    */
-  public serialize(): any[] {
+  public serialize(): unknown[] {
     return Array.from(this.entities.values()).map((entity) =>
       entity.serialize()
     );
   }
 
   /**
-   * Deserialize entities from save data
+   * Deserialize entities from save data.
+   * Restores Structure entities (player-built) with position and rotation; other types are skipped.
    */
-  public deserialize(_data: any[]): void {
-    // Note: This requires entity factories to reconstruct specific entity types
-    // For now, this is a placeholder that would need entity type registration
-    console.warn('EntityManager.deserialize() requires entity type factories');
+  public deserialize(data: unknown[]): void {
+    if (!data || !Array.isArray(data)) return;
+
+    for (const item of data) {
+      const it = item as Record<string, unknown>;
+      if (it.type !== 'Structure') continue;
+
+      const recipeId = it.recipeId as string | undefined;
+      const recipe = recipeId ? RECIPES[recipeId] : null;
+      if (!recipe) continue;
+
+      const pos = it.position as { x?: number; y?: number; z?: number } | undefined;
+      const position = new THREE.Vector3(pos?.x ?? 0, pos?.y ?? 0, pos?.z ?? 0);
+      const rotationY = typeof it.rotationY === 'number' ? it.rotationY : 0;
+
+      const structure = new Structure(recipe, position, rotationY);
+      this.addEntity(structure);
+    }
   }
 }

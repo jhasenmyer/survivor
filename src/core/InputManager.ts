@@ -91,10 +91,31 @@ export class InputManager {
   }
 
   /**
-   * Check recipe cycle (R)
+   * Check recipe cycle (R) - build mode only
    */
   public isRecycleCyclePressed(): boolean {
     return this.isKeyJustPressed('KeyR');
+  }
+
+  /**
+   * Check rotate structure (R) - when looking at placed structure
+   */
+  public isRotateStructurePressed(): boolean {
+    return this.isKeyJustPressed('KeyR');
+  }
+
+  /**
+   * Check destroy structure (G) - when looking at placed structure
+   */
+  public isDestroyStructurePressed(): boolean {
+    return this.isKeyJustPressed('KeyG');
+  }
+
+  /**
+   * Check rotate ghost (Q) - build mode only
+   */
+  public isRotateGhostPressed(): boolean {
+    return this.isKeyJustPressed('KeyQ');
   }
 
   /**

@@ -130,8 +130,10 @@ export class SaveSystem {
       // Restore time of day
       this.timeSystem.setCurrentTime(saveData.world.timeOfDay);
 
-      // Note: Entity restoration would need entity factories
-      // For now, we skip entity restoration and let them respawn naturally
+      // Restore entities (e.g. player-built structures with rotation)
+      if (saveData.entities && Array.isArray(saveData.entities)) {
+        this.world.entityManager.deserialize(saveData.entities);
+      }
 
       console.log('Game loaded successfully!');
       return true;

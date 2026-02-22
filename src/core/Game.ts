@@ -9,7 +9,8 @@ import { InteractionSystem } from '../systems/InteractionSystem';
 import { SaveSystem } from '../systems/SaveSystem';
 import { BuildingSystem } from '../systems/BuildingSystem';
 import { CraftingSystem } from '../systems/CraftingSystem';
-import { ITEMS } from '../types/Item';
+import { ITEMS, getItem } from '../types/Item';
+import type { Structure } from '../entities/Structure';
 import { getPerformanceMode, setPerformanceMode as persistPerformanceMode } from './GameSettings';
 
 export class Game {
@@ -853,8 +854,37 @@ export class Game {
       if (this.inputManager.isRecycleCyclePressed()) {
         this.buildingSystem.cycleRecipe();
       }
+
+      // Rotate ghost (Q key)
+      if (this.inputManager.isRotateGhostPressed()) {
+        this.buildingSystem.rotateGhost();
+      }
     } else {
       // Normal mode inputs
+      const target = this.interactionSystem.getCurrentTarget();
+
+      // Rotate structure (R key) when looking at a placed structure
+      if (this.inputManager.isRotateStructurePressed() && target?.constructor.name === 'Structure') {
+        (target as Structure).rotate();
+        this.showNotification('Structure rotated', 'success');
+      }
+
+      // Destroy structure and reclaim materials (G key) when looking at a placed structure
+      if (this.inputManager.isDestroyStructurePressed() && target?.constructor.name === 'Structure') {
+        const structure = target as Structure;
+        const recipe = structure.getRecipe();
+        for (const req of recipe.requirements) {
+          const item = getItem(req.itemId);
+          if (item) {
+            this.player.addItem(item, req.quantity);
+          }
+        }
+        this.world.entityManager.removeEntity(structure.id);
+        const reclaimed = recipe.requirements.map((r) => `${r.quantity}x ${r.itemId}`).join(', ');
+        this.showNotification(`Destroyed ${recipe.name}. Reclaimed: ${reclaimed}.`, 'success');
+        this.updateHotbarUI();
+      }
+
       // Interaction (E key)
       if (this.inputManager.isInteractPressed()) {
         this.interactionSystem.interact();

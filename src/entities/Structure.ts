@@ -10,8 +10,9 @@ import type { BuildingRecipe } from '../types/BuildingRecipe';
 
 export class Structure extends Entity {
   private recipe: BuildingRecipe;
+  private rotationY: number;
 
-  constructor(recipe: BuildingRecipe, position: THREE.Vector3) {
+  constructor(recipe: BuildingRecipe, position: THREE.Vector3, rotationY: number = 0) {
     super({
       position,
       health: 100,
@@ -19,9 +20,11 @@ export class Structure extends Entity {
     });
 
     this.recipe = recipe;
+    this.rotationY = rotationY;
     this.isInteractable = recipe.interactable;
 
     this.createMesh();
+    this.mesh.rotation.y = this.rotationY;
   }
 
   /**
@@ -230,7 +233,23 @@ export class Structure extends Entity {
    * Get interaction prompt
    */
   public getInteractionPrompt(): string {
-    return this.recipe.interactionText || `${this.recipe.name}`;
+    const base = this.recipe.interactionText || this.recipe.name;
+    return `${base} (R Rotate, G Destroy)`;
+  }
+
+  /**
+   * Get Y rotation in radians
+   */
+  public getRotationY(): number {
+    return this.rotationY;
+  }
+
+  /**
+   * Rotate structure by 90 degrees (Y axis)
+   */
+  public rotate(): void {
+    this.rotationY += Math.PI / 2;
+    this.mesh.rotation.y = this.rotationY;
   }
 
   /**
@@ -245,5 +264,15 @@ export class Structure extends Entity {
    */
   public getRecipe(): BuildingRecipe {
     return this.recipe;
+  }
+
+  /**
+   * Serialize for save (include recipeId and rotationY)
+   */
+  public serialize(): Record<string, unknown> {
+    const data = super.serialize() as Record<string, unknown>;
+    data.recipeId = this.recipe.id;
+    data.rotationY = this.rotationY;
+    return data;
   }
 }
