@@ -86,6 +86,11 @@ export class Structure extends Entity {
     const fire = new THREE.Mesh(fireGeometry, fireMaterial);
     fire.position.y = 0.6;
     group.add(fire);
+
+    // Proximity light (illuminates area after dark)
+    const pointLight = new THREE.PointLight(0xff8844, 1.2, 10, 2);
+    pointLight.position.set(0, 0.6, 0);
+    group.add(pointLight);
   }
 
   /**
