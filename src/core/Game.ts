@@ -10,6 +10,7 @@ import { SaveSystem } from '../systems/SaveSystem';
 import { BuildingSystem } from '../systems/BuildingSystem';
 import { CraftingSystem } from '../systems/CraftingSystem';
 import { ITEMS } from '../types/Item';
+import { getPerformanceMode, setPerformanceMode as persistPerformanceMode } from './GameSettings';
 
 export class Game {
   private scene: THREE.Scene;
@@ -29,12 +30,17 @@ export class Game {
   private buildingSystem: BuildingSystem;
   private craftingSystem: CraftingSystem;
 
+  // Settings (performance mode affects renderer and shadows)
+  private performanceMode: boolean;
+
   // UI state
   private inventoryOpen: boolean = false;
   private inventoryPickedSlotIndex: number | null = null;
   private helpOpen: boolean = false;
   private craftingOpen: boolean = false;
   private hasLoggedFirstFrame: boolean = false;
+  private pauseMenuOpen: boolean = false;
+  private settingsOpen: boolean = false;
 
   // Lights (needed for TimeSystem)
   private directionalLight!: THREE.DirectionalLight;
@@ -43,18 +49,19 @@ export class Game {
   constructor() {
     console.log('Game constructor: Starting initialization');
 
+    this.performanceMode = getPerformanceMode();
+
     // Initialize scene
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x87ceeb); // Sky blue
     this.scene.fog = new THREE.Fog(0x87ceeb, 50, 200);
     console.log('Scene created');
 
-    // Initialize renderer
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    // Initialize renderer (antialias only when not in performance mode)
+    this.renderer = new THREE.WebGLRenderer({ antialias: !this.performanceMode });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.applyPerformanceSettings();
     console.log('Renderer created');
 
     const container = document.getElementById('game-canvas');
@@ -145,15 +152,46 @@ export class Game {
     this.directionalLight = new THREE.DirectionalLight(0xffffff, 1.3);
     this.directionalLight.position.set(50, 100, 50);
     this.directionalLight.castShadow = true;
-    this.directionalLight.shadow.camera.left = -100;
-    this.directionalLight.shadow.camera.right = 100;
-    this.directionalLight.shadow.camera.top = 100;
-    this.directionalLight.shadow.camera.bottom = -100;
-    this.directionalLight.shadow.camera.near = 0.5;
-    this.directionalLight.shadow.camera.far = 500;
-    this.directionalLight.shadow.mapSize.width = 2048;
-    this.directionalLight.shadow.mapSize.height = 2048;
+    this.applyDirectionalShadowSettings();
     this.scene.add(this.directionalLight);
+  }
+
+  /** Apply pixel ratio and shadow map type from current performance mode. */
+  private applyPerformanceSettings(): void {
+    this.renderer.setPixelRatio(
+      this.performanceMode ? 1 : Math.min(window.devicePixelRatio, 2)
+    );
+    this.renderer.shadowMap.type = this.performanceMode
+      ? THREE.BasicShadowMap
+      : THREE.PCFSoftShadowMap;
+    if (this.directionalLight) {
+      this.applyDirectionalShadowSettings();
+    }
+  }
+
+  /** Set directional light shadow map size and camera bounds from performance mode. */
+  private applyDirectionalShadowSettings(): void {
+    if (!this.directionalLight) return;
+    if (this.performanceMode) {
+      this.directionalLight.shadow.mapSize.width = 1024;
+      this.directionalLight.shadow.mapSize.height = 1024;
+      this.directionalLight.shadow.camera.left = -50;
+      this.directionalLight.shadow.camera.right = 50;
+      this.directionalLight.shadow.camera.top = 50;
+      this.directionalLight.shadow.camera.bottom = -50;
+      this.directionalLight.shadow.camera.near = 0.5;
+      this.directionalLight.shadow.camera.far = 300;
+    } else {
+      this.directionalLight.shadow.mapSize.width = 2048;
+      this.directionalLight.shadow.mapSize.height = 2048;
+      this.directionalLight.shadow.camera.left = -100;
+      this.directionalLight.shadow.camera.right = 100;
+      this.directionalLight.shadow.camera.top = 100;
+      this.directionalLight.shadow.camera.bottom = -100;
+      this.directionalLight.shadow.camera.near = 0.5;
+      this.directionalLight.shadow.camera.far = 500;
+    }
+    this.directionalLight.shadow.camera.updateProjectionMatrix();
   }
 
   /**
@@ -208,6 +246,103 @@ export class Game {
         e.preventDefault();
       }
     });
+
+    // Pause menu
+    const resumeButton = document.getElementById('resume-button');
+    if (resumeButton) {
+      resumeButton.addEventListener('click', () => {
+        this.closePauseMenu();
+      });
+    }
+    const saveButton = document.getElementById('save-button');
+    if (saveButton) {
+      saveButton.addEventListener('click', () => {
+        if (this.saveSystem.save()) {
+          this.showNotification('Game saved!', 'success');
+        }
+      });
+    }
+    const pauseSettingsButton = document.getElementById('settings-button');
+    if (pauseSettingsButton) {
+      pauseSettingsButton.addEventListener('click', () => {
+        this.openSettingsFrom('pause');
+      });
+    }
+    const exitButton = document.getElementById('exit-button');
+    if (exitButton) {
+      exitButton.addEventListener('click', () => {
+        this.closePauseMenu();
+        const mainMenu = document.getElementById('main-menu');
+        if (mainMenu) mainMenu.style.display = 'block';
+      });
+    }
+
+    // Main menu Settings
+    const mainMenuSettingsButton = document.getElementById('main-menu-settings-button');
+    if (mainMenuSettingsButton) {
+      mainMenuSettingsButton.addEventListener('click', () => {
+        const mainMenu = document.getElementById('main-menu');
+        if (mainMenu) mainMenu.style.display = 'none';
+        this.openSettingsFrom('main');
+      });
+    }
+
+    // Settings panel
+    const settingsBackButton = document.getElementById('settings-back-button');
+    if (settingsBackButton) {
+      settingsBackButton.addEventListener('click', () => {
+        this.closeSettings();
+      });
+    }
+    const performanceToggle = document.getElementById('settings-performance-toggle') as HTMLInputElement | null;
+    if (performanceToggle) {
+      performanceToggle.addEventListener('change', () => {
+        this.setPerformanceMode(performanceToggle.checked);
+      });
+    }
+  }
+
+  private openSettingsFrom(from: 'pause' | 'main'): void {
+    this.settingsOpen = true;
+    const pauseMenu = document.getElementById('pause-menu');
+    const settingsPanel = document.getElementById('settings-panel');
+    const performanceToggle = document.getElementById('settings-performance-toggle') as HTMLInputElement | null;
+    if (pauseMenu) pauseMenu.style.display = 'none';
+    if (settingsPanel) {
+      settingsPanel.dataset.from = from;
+      settingsPanel.style.display = 'block';
+    }
+    if (performanceToggle) performanceToggle.checked = this.getPerformanceMode();
+  }
+
+  private closeSettings(): void {
+    this.settingsOpen = false;
+    const settingsPanel = document.getElementById('settings-panel');
+    if (!settingsPanel) return;
+    settingsPanel.style.display = 'none';
+    const from = settingsPanel.dataset.from;
+    if (from === 'pause') {
+      const pauseMenu = document.getElementById('pause-menu');
+      if (pauseMenu) pauseMenu.style.display = 'block';
+    } else if (from === 'main') {
+      const mainMenu = document.getElementById('main-menu');
+      if (mainMenu) mainMenu.style.display = 'block';
+    }
+  }
+
+  private openPauseMenu(): void {
+    this.pauseMenuOpen = true;
+    document.exitPointerLock();
+    this.pause();
+    const pauseMenu = document.getElementById('pause-menu');
+    if (pauseMenu) pauseMenu.style.display = 'block';
+  }
+
+  private closePauseMenu(): void {
+    this.pauseMenuOpen = false;
+    const pauseMenu = document.getElementById('pause-menu');
+    if (pauseMenu) pauseMenu.style.display = 'none';
+    this.resume();
   }
 
   /**
@@ -743,10 +878,20 @@ export class Game {
       }
     }
 
-    // Pause menu (Escape key)
+    // Pause menu / Settings (Escape key)
     if (this.inputManager.isPausePressed()) {
-      console.log('Pause menu - not yet implemented');
-      // TODO: Show pause menu
+      if (this.settingsOpen) {
+        this.closeSettings();
+        const pauseMenu = document.getElementById('pause-menu');
+        if (pauseMenu) pauseMenu.style.display = 'block';
+        return;
+      }
+      if (this.pauseMenuOpen) {
+        this.closePauseMenu();
+        return;
+      }
+      this.openPauseMenu();
+      return;
     }
   }
 
@@ -837,5 +982,17 @@ export class Game {
     this.player.camera.aspect = window.innerWidth / window.innerHeight;
     this.player.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.applyPerformanceSettings();
+  }
+
+  /** Set performance mode (smoother on slow GPUs). Takes effect immediately. */
+  public setPerformanceMode(enabled: boolean): void {
+    this.performanceMode = enabled;
+    persistPerformanceMode(enabled);
+    this.applyPerformanceSettings();
+  }
+
+  public getPerformanceMode(): boolean {
+    return this.performanceMode;
   }
 }

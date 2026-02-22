@@ -62,13 +62,17 @@ export class Player {
         const deathScreen = document.getElementById('death-screen');
         const loadingScreen = document.getElementById('loading-screen');
         const helpScreen = document.getElementById('help-screen');
+        const pauseMenu = document.getElementById('pause-menu');
+        const settingsPanel = document.getElementById('settings-panel');
 
         const isAnyMenuOpen =
           (mainMenu && mainMenu.style.display !== 'none') ||
           (inventoryUI && inventoryUI.style.display !== 'none') ||
           (deathScreen && deathScreen.style.display !== 'none') ||
           (loadingScreen && loadingScreen.style.display !== 'none') ||
-          (helpScreen && helpScreen.style.display !== 'none');
+          (helpScreen && helpScreen.style.display !== 'none') ||
+          (pauseMenu && pauseMenu.style.display !== 'none') ||
+          (settingsPanel && settingsPanel.style.display !== 'none');
 
         if (!isAnyMenuOpen) {
           document.body.requestPointerLock();
