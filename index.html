@@ -280,6 +280,34 @@
       pointer-events: auto;
       overflow-y: auto;
     }
+    /* Map Panel */
+    #map-panel {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.95);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      padding: 20px;
+      pointer-events: auto;
+      z-index: 500;
+    }
+    #map-panel h3 {
+      color: #4a9eff;
+      margin: 0 0 12px 0;
+      font-size: 20px;
+    }
+    #map-canvas {
+      display: block;
+      background: #1a1a2e;
+      border-radius: 4px;
+    }
+    #map-close-hint {
+      color: #888;
+      font-size: 12px;
+      margin-top: 8px;
+    }
     #crafting-header {
       color: white;
       font-size: 28px;
@@ -778,6 +806,13 @@
     <div id="crafting-recipe-list"></div>
   </div>
 
+  <!-- Map (hidden by default) -->
+  <div id="map-panel" style="display: none;">
+    <h3>Map</h3>
+    <canvas id="map-canvas" width="400" height="400"></canvas>
+    <div id="map-close-hint">M to close</div>
+  </div>
+
   <!-- Death Screen -->
   <div id="death-screen" style="display: none;">
     <div id="death-message">YOU DIED</div>
@@ -863,6 +898,10 @@
 
       <div class="help-section">
         <h3>Home / Navigation</h3>
+        <div class="help-key">
+          <span class="help-key-name">M</span>
+          <span class="help-key-description">Open/Close Map (explored areas, home, structures)</span>
+        </div>
         <p class="help-tip">Interact (E) with a campfire, tent, or shelter to set it as home. A compass at the top of the screen will show direction and distance back to home.</p>
       </div>
 

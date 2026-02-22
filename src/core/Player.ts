@@ -64,6 +64,7 @@ export class Player {
         const helpScreen = document.getElementById('help-screen');
         const pauseMenu = document.getElementById('pause-menu');
         const settingsPanel = document.getElementById('settings-panel');
+        const mapPanel = document.getElementById('map-panel');
 
         const isAnyMenuOpen =
           (mainMenu && mainMenu.style.display !== 'none') ||
@@ -72,7 +73,8 @@ export class Player {
           (loadingScreen && loadingScreen.style.display !== 'none') ||
           (helpScreen && helpScreen.style.display !== 'none') ||
           (pauseMenu && pauseMenu.style.display !== 'none') ||
-          (settingsPanel && settingsPanel.style.display !== 'none');
+          (settingsPanel && settingsPanel.style.display !== 'none') ||
+          (mapPanel && mapPanel.style.display !== 'none');
 
         if (!isAnyMenuOpen) {
           document.body.requestPointerLock();

@@ -21,6 +21,7 @@ export interface SaveData {
   };
   world: {
     timeOfDay: number;
+    exploredChunkKeys?: string[];
   };
   entities: any[];
 }
@@ -31,19 +32,31 @@ export class SaveSystem {
   private player: Player;
   private world: World;
   private timeSystem: TimeSystem;
+  private getExploredChunkKeys?: () => string[];
   private autoSaveInterval: number | null = null;
 
-  constructor(player: Player, world: World, timeSystem: TimeSystem) {
+  constructor(
+    player: Player,
+    world: World,
+    timeSystem: TimeSystem,
+    getExploredChunkKeys?: () => string[]
+  ) {
     this.player = player;
     this.world = world;
     this.timeSystem = timeSystem;
+    this.getExploredChunkKeys = getExploredChunkKeys;
   }
+
+  private lastLoadedExploredChunkKeys: string[] = [];
 
   /**
    * Save the current game state
+   * @param exploredChunkKeys - Optional list of explored map chunk keys to persist
    */
-  public save(): boolean {
+  public save(exploredChunkKeys?: string[]): boolean {
     try {
+      const keys =
+        exploredChunkKeys ?? this.getExploredChunkKeys?.() ?? [];
       const saveData: SaveData = {
         version: this.SAVE_VERSION,
         timestamp: Date.now(),
@@ -67,6 +80,7 @@ export class SaveSystem {
         },
         world: {
           timeOfDay: this.timeSystem.getCurrentTime(),
+          exploredChunkKeys: keys,
         },
         entities: this.world.entityManager.serialize(),
       };
@@ -130,6 +144,10 @@ export class SaveSystem {
       // Restore time of day
       this.timeSystem.setCurrentTime(saveData.world.timeOfDay);
 
+      // Store explored map chunks for Game to apply (optional for old saves)
+      const keys = saveData.world.exploredChunkKeys;
+      this.lastLoadedExploredChunkKeys = keys && Array.isArray(keys) ? keys : [];
+
       // Restore entities (e.g. player-built structures with rotation)
       if (saveData.entities && Array.isArray(saveData.entities)) {
         this.world.entityManager.deserialize(saveData.entities);
@@ -141,6 +159,14 @@ export class SaveSystem {
       console.error('Failed to load game:', error);
       return false;
     }
+  }
+
+  /**
+   * Get explored chunk keys that were loaded from the last load() call.
+   * Game should call this after load() and apply them to its explored set.
+   */
+  public getLoadedExploredChunkKeys(): string[] {
+    return this.lastLoadedExploredChunkKeys;
   }
 
   /**

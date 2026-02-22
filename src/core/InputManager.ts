@@ -133,6 +133,13 @@ export class InputManager {
   }
 
   /**
+   * Check map toggle (M)
+   */
+  public isMapToggled(): boolean {
+    return this.isKeyJustPressed('KeyM');
+  }
+
+  /**
    * Check hotbar slot selection (1-9)
    */
   public getHotbarSlotPressed(): number | null {

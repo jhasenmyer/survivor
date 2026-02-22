@@ -11,6 +11,8 @@ import { BuildingSystem } from '../systems/BuildingSystem';
 import { CraftingSystem } from '../systems/CraftingSystem';
 import { ITEMS, getItem } from '../types/Item';
 import type { Structure } from '../entities/Structure';
+import { Structure as StructureEntity } from '../entities/Structure';
+import { renderMap } from '../ui/MapOverlay';
 import { getPerformanceMode, setPerformanceMode as persistPerformanceMode } from './GameSettings';
 
 export class Game {
@@ -42,6 +44,11 @@ export class Game {
   private hasLoggedFirstFrame: boolean = false;
   private pauseMenuOpen: boolean = false;
   private settingsOpen: boolean = false;
+  private mapOpen: boolean = false;
+
+  // Map exploration (chunk keys "chunkX,chunkZ", same formula as World CHUNK_SIZE 50)
+  private exploredChunks: Set<string> = new Set();
+  private readonly MAP_CHUNK_SIZE = 50;
 
   // Lights (needed for TimeSystem)
   private directionalLight!: THREE.DirectionalLight;
@@ -122,7 +129,12 @@ export class Game {
 
     // Initialize save system
     console.log('Creating SaveSystem');
-    this.saveSystem = new SaveSystem(this.player, this.world, this.timeSystem);
+    this.saveSystem = new SaveSystem(
+      this.player,
+      this.world,
+      this.timeSystem,
+      () => this.getExploredChunkKeys()
+    );
     console.log('SaveSystem created');
 
     // Initialize building system
@@ -258,7 +270,7 @@ export class Game {
     const saveButton = document.getElementById('save-button');
     if (saveButton) {
       saveButton.addEventListener('click', () => {
-        if (this.saveSystem.save()) {
+        if (this.saveSystem.save(this.getExploredChunkKeys())) {
           this.showNotification('Game saved!', 'success');
         }
       });
@@ -465,6 +477,14 @@ export class Game {
     }
   }
 
+  private toggleMap(): void {
+    this.mapOpen = !this.mapOpen;
+    const panel = document.getElementById('map-panel');
+    if (panel) {
+      panel.style.display = this.mapOpen ? 'block' : 'none';
+    }
+  }
+
   /**
    * Update full inventory UI
    */
@@ -606,6 +626,7 @@ export class Game {
 
     if (this.saveSystem.load()) {
       console.log('Save loaded, starting game...');
+      this.setExploredChunkKeys(this.saveSystem.getLoadedExploredChunkKeys());
       this.updateHotbarUI();
       this.start();
     } else {
@@ -750,6 +771,12 @@ export class Game {
     // Update home compass (direction + distance)
     this.updateHomeCompass();
 
+    // Mark current chunk as explored for the map
+    const pos = this.player.getPosition();
+    const cx = Math.floor(pos.x / this.MAP_CHUNK_SIZE);
+    const cz = Math.floor(pos.z / this.MAP_CHUNK_SIZE);
+    this.exploredChunks.add(`${cx},${cz}`);
+
     // Update building system ghost placement
     this.buildingSystem.updateGhostPlacement(this.player.camera);
 
@@ -763,6 +790,36 @@ export class Game {
     this.audioSystem.update(delta);
 
     this.world.update(delta);
+
+    // Update map canvas when map is open
+    if (this.mapOpen) {
+      const canvas = document.getElementById('map-canvas') as HTMLCanvasElement;
+      if (canvas) {
+        const pos = this.player.getPosition();
+        const dir = this.player.getDirection();
+        const yaw = Math.atan2(dir.x, dir.z);
+        const structures = this.world.entityManager
+          .getAllEntities()
+          .filter((e): e is StructureEntity => e instanceof StructureEntity)
+          .map((e) => ({
+            x: e.position.x,
+            z: e.position.z,
+            recipeId: e.getRecipe().id,
+          }));
+        const home = this.player.hasHome()
+          ? this.player.getHomePosition()!
+          : null;
+        renderMap(canvas, {
+          exploredChunkKeys: this.getExploredChunkKeys(),
+          structures,
+          homePosition: home
+            ? { x: home.x, z: home.z }
+            : null,
+          playerPosition: { x: pos.x, z: pos.z },
+          playerAngleRad: yaw,
+        });
+      }
+    }
 
     // Render
     this.renderer.render(this.scene, this.player.camera);
@@ -831,8 +888,19 @@ export class Game {
       return; // Don't process other inputs when toggling
     }
 
+    // Map toggle (M key) - always check so it can close too
+    if (this.inputManager.isMapToggled()) {
+      this.toggleMap();
+      return;
+    }
+
     // Skip other inputs if crafting is open
     if (this.craftingOpen) {
+      return;
+    }
+
+    // Skip other inputs if map is open
+    if (this.mapOpen) {
       return;
     }
 
@@ -902,7 +970,7 @@ export class Game {
     // Save game (P key)
     if (this.inputManager.isSavePressed()) {
       console.log('Saving game...');
-      if (this.saveSystem.save()) {
+      if (this.saveSystem.save(this.getExploredChunkKeys())) {
         console.log('Game saved successfully!');
         // TODO: Show "Game Saved!" message to player
       }
@@ -961,6 +1029,17 @@ export class Game {
     arrowEl.style.transform = `rotate(${deg}deg)`;
   }
 
+  /** Get explored map chunk keys for saving and for map renderer. */
+  public getExploredChunkKeys(): string[] {
+    return Array.from(this.exploredChunks);
+  }
+
+  /** Set explored map chunk keys after loading a save. */
+  public setExploredChunkKeys(keys: string[]): void {
+    this.exploredChunks.clear();
+    keys.forEach((k) => this.exploredChunks.add(k));
+  }
+
   /**
    * Hide gameplay UI elements (for main menu)
    */
@@ -969,11 +1048,16 @@ export class Game {
     const hotbar = document.getElementById('hotbar');
     const crosshair = document.getElementById('crosshair');
     const homeCompass = document.getElementById('home-compass');
+    const mapPanel = document.getElementById('map-panel');
 
     if (hud) hud.style.display = 'none';
     if (hotbar) hotbar.style.display = 'none';
     if (crosshair) crosshair.style.display = 'none';
     if (homeCompass) homeCompass.style.display = 'none';
+    if (mapPanel) {
+      mapPanel.style.display = 'none';
+      this.mapOpen = false;
+    }
   }
 
   /**
@@ -983,10 +1067,12 @@ export class Game {
     const hud = document.getElementById('hud');
     const hotbar = document.getElementById('hotbar');
     const crosshair = document.getElementById('crosshair');
+    const mapPanel = document.getElementById('map-panel');
 
     if (hud) hud.style.display = 'block';
     if (hotbar) hotbar.style.display = 'flex';
     if (crosshair) crosshair.style.display = 'block';
+    if (mapPanel) mapPanel.style.display = 'none'; // keep map closed when showing HUD
     // Home compass visibility is updated each frame in updateHomeCompass()
   }
 
