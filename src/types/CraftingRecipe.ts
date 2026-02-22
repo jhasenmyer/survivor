@@ -83,6 +83,17 @@ export const RECIPES: Record<string, CraftingRecipe> = {
     category: 'tools',
   },
 
+  // Resources
+  stick: {
+    id: 'stick',
+    name: 'Stick',
+    description: 'Craft sticks from wood. One wood makes 3 sticks.',
+    resultItemId: 'stick',
+    resultQuantity: 3,
+    requirements: [{ itemId: 'wood', quantity: 1 }],
+    category: 'equipment',
+  },
+
   // Consumables
   torch: {
     id: 'torch',
