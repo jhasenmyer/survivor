@@ -31,6 +31,7 @@ export class Game {
 
   // UI state
   private inventoryOpen: boolean = false;
+  private inventoryPickedSlotIndex: number | null = null;
   private helpOpen: boolean = false;
   private craftingOpen: boolean = false;
   private hasLoggedFirstFrame: boolean = false;
@@ -278,6 +279,9 @@ export class Game {
    */
   private toggleInventory(): void {
     this.inventoryOpen = !this.inventoryOpen;
+    if (!this.inventoryOpen) {
+      this.inventoryPickedSlotIndex = null;
+    }
     const inventoryUI = document.getElementById('inventory-ui');
     if (inventoryUI) {
       inventoryUI.style.display = this.inventoryOpen ? 'block' : 'none';
@@ -344,6 +348,11 @@ export class Game {
         slotElement.classList.add('hotbar-slot-inv');
       }
 
+      // Highlight slot when picked for moving
+      if (index === this.inventoryPickedSlotIndex) {
+        slotElement.classList.add('inventory-slot-picked');
+      }
+
       if (slot.item) {
         // Create icon and quantity display
         const iconElement = document.createElement('div');
@@ -381,8 +390,37 @@ export class Game {
         slotElement.textContent = '';
       }
 
-      // Add click handler for using items
-      slotElement.addEventListener('click', () => {
+      // Left-click: pick slot for moving, or place/swap with picked slot
+      slotElement.addEventListener('click', (e: MouseEvent) => {
+        if (e.button !== 0) return; // only left-click
+        const slotIndex = index;
+
+        if (this.inventoryPickedSlotIndex === null) {
+          // Start move: pick this slot if it has an item
+          if (slot.item) {
+            this.inventoryPickedSlotIndex = slotIndex;
+            this.updateInventoryUI();
+          }
+          return;
+        }
+
+        if (this.inventoryPickedSlotIndex === slotIndex) {
+          // Clicked same slot: cancel pick
+          this.inventoryPickedSlotIndex = null;
+          this.updateInventoryUI();
+          return;
+        }
+
+        // Place/swap: move from picked slot to this slot
+        this.player.inventory.swapSlots(this.inventoryPickedSlotIndex, slotIndex);
+        this.inventoryPickedSlotIndex = null;
+        this.updateInventoryUI();
+        this.updateHotbarUI();
+      });
+
+      // Right-click: use item (consumables, etc.)
+      slotElement.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
         if (slot.item && slot.item.useAction) {
           slot.item.useAction(this.player);
           this.updateInventoryUI();

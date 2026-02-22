@@ -221,6 +221,11 @@
       border-color: rgba(74, 158, 255, 0.5);
       background: rgba(74, 158, 255, 0.1);
     }
+    .inventory-slot.inventory-slot-picked {
+      border-color: #4ade80;
+      background: rgba(74, 222, 128, 0.2);
+      box-shadow: 0 0 12px rgba(74, 222, 128, 0.5);
+    }
     .inventory-slot.empty-slot {
       opacity: 0.5;
     }
@@ -719,7 +724,7 @@
 
   <!-- Full Inventory (hidden by default) -->
   <div id="inventory-ui" style="display: none;">
-    <div id="inventory-header">Inventory (Press Tab to close)</div>
+    <div id="inventory-header">Inventory — Click item, then hotbar slot to move. Right-click to use.</div>
     <div id="inventory-grid"></div>
   </div>
 
